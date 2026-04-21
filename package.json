@@ -20,7 +20,6 @@
       "next-themes": "^0.4.6",
       "react": "^19.2.3",
       "react-dom": "^19.2.3",
-      "sonner": "^2.0.5",
       "@orpc/client": "^1.13.14",
       "@types/react": "^19.2.10",
       "@types/react-dom": "^19.2.3",
@@ -32,13 +31,17 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "check-types": "turbo check-types",
-    "dev:web": "turbo -F web dev",
+    "dev:external": "turbo -F external dev",
+    "dev:internal": "turbo -F internal dev",
+    "dev:admin": "turbo -F admin dev",
     "dev:server": "turbo -F server dev",
     "db:push": "turbo -F @e-service/db db:push",
     "db:studio": "turbo -F @e-service/db db:studio",
     "db:generate": "turbo -F @e-service/db db:generate",
     "db:migrate": "turbo -F @e-service/db db:migrate",
-    "check": "biome check --write ."
+    "check": "biome check --write .",
+    "format": "biome format --write .",
+    "lint": "biome lint --write ."
   },
   "dependencies": {
     "@e-service/env": "workspace:*",

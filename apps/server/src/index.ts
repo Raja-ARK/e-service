@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/noUnusedVariables: Suppressing this rule for the server index file */
 import { createContext } from "@e-service/api/context";
 import { appRouter } from "@e-service/api/routers/index";
 import { auth } from "@e-service/auth";
@@ -30,10 +31,11 @@ const apiHandler = new OpenAPIHandler(appRouter, {
   ],
 });
 
+// @ts-expect-error
 const app = new Elysia()
   .use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin: [env.EXTERNAL_URL, env.INTERNAL_URL, env.ADMIN_URL],
       methods: ["GET", "POST", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
       credentials: true,

@@ -13,7 +13,7 @@
   "$schema": "https://r2.better-t-stack.dev/schema.json",
   "version": "3.27.2",
   "createdAt": "2026-04-21T10:49:22.989Z",
-  "reproducibleCommand": "bun create better-t-stack@latest e-service --frontend next --backend elysia --runtime bun --database postgres --orm drizzle --api orpc --auth better-auth --payments none --addons biome lefthook turborepo --examples none --db-setup none --web-deploy none --server-deploy none --git --package-manager bun --install",
+  "reproducibleCommand": "bun create better-t-stack@latest e-service --frontend next --backend elysia --runtime bun --database postgres --orm drizzle --api orpc --auth better-auth --payments none --addons biome lefthook turborepo --examples none --db-setup none --internal-deploy none --server-deploy none --git --package-manager bun --install",
   "database": "postgres",
   "orm": "drizzle",
   "backend": "elysia",

@@ -4,16 +4,15 @@ import { env } from "@e-service/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
-export function createAuth() {
+export const createAuth = () => {
   const db = createDb();
 
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
-
       schema: schema,
     }),
-    trustedOrigins: [env.CORS_ORIGIN],
+    trustedOrigins: [env.EXTERNAL_URL, env.INTERNAL_URL, env.ADMIN_URL],
     emailAndPassword: {
       enabled: true,
     },
@@ -28,6 +27,6 @@ export function createAuth() {
     },
     plugins: [],
   });
-}
+};
 
 export const auth = createAuth();
