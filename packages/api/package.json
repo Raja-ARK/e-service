@@ -1,0 +1,29 @@
+{
+  "name": "@e-service/api",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@e-service/auth": "workspace:*",
+    "@e-service/db": "workspace:*",
+    "@e-service/env": "workspace:*",
+    "@orpc/client": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@e-service/config": "workspace:*",
+    "elysia": "catalog:",
+    "typescript": "catalog:"
+  }
+}

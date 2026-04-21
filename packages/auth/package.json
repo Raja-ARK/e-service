@@ -1,0 +1,24 @@
+{
+  "name": "@e-service/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@e-service/db": "workspace:*",
+    "@e-service/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@e-service/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}
