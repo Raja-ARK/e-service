@@ -1,0 +1,31 @@
+{
+  "name": "@e-service/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./routing": "./src/routing.ts",
+    "./navigation": "./src/navigation.ts",
+    "./plugin": "./src/plugin.ts",
+    "./middleware": "./src/middleware.ts",
+    "./messages/en": "./src/messages/en.json",
+    "./messages/ar": "./src/messages/ar.json",
+    "./messages/load": "./src/messages/load.ts",
+    "./types": "./src/types.ts"
+  },
+  "dependencies": {
+    "next-intl": "^4.10.1"
+  },
+  "peerDependencies": {
+    "next": ">=16.2.4",
+    "react": ">=19.2.5"
+  },
+  "devDependencies": {
+    "@e-service/config": "workspace:*",
+    "@types/react": "catalog:",
+    "next": "^16.2.4",
+    "typescript": "catalog:"
+  }
+}

@@ -41,13 +41,10 @@ const app = new Elysia()
       credentials: true,
     }),
   )
-  .all("/api/auth/*", async (context) => {
-    const { request, status } = context;
-    if (["POST", "GET"].includes(request.method)) {
-      return auth.handler(request);
-    }
-    return status(405);
-  })
+  // For better-auth to work, we don't need to include in our routing document.
+  .post("/api/auth/sign-in/social", ({ request }) => auth.handler(request))
+  .get("/api/auth/callback/:provider", ({ request }) => auth.handler(request))
+  // For RPC call
   .all(
     "/rpc*",
     async (context) => {
@@ -62,10 +59,10 @@ const app = new Elysia()
     },
   )
   .all(
-    "/api-reference*",
+    "/docs*",
     async (context) => {
       const { response } = await apiHandler.handle(context.request, {
-        prefix: "/api-reference",
+        prefix: "/docs",
         context: await createContext({ context }),
       });
       return response ?? new Response("Not Found", { status: 404 });

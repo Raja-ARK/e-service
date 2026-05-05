@@ -1,5 +1,13 @@
 {
   "permissions": {
-    "allow": ["Bash(xargs wc *)"]
+    "allow": [
+      "Bash(xargs wc *)",
+      "WebFetch(domain:orpc.dev)",
+      "Bash(bun install *)",
+      "Bash(bun run *)",
+      "WebFetch(domain:nuqs.dev)",
+      "WebFetch(domain:next-intl.dev)",
+      "WebFetch(domain:better-auth.com)"
+    ]
   }
 }

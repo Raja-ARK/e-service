@@ -38,6 +38,9 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "off"
+      },
       "correctness": {
         "useExhaustiveDependencies": "info"
       },

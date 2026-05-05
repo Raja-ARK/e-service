@@ -13,15 +13,20 @@ export const createAuth = () => {
       schema: schema,
     }),
     trustedOrigins: [env.EXTERNAL_URL, env.INTERNAL_URL, env.ADMIN_URL],
-    emailAndPassword: {
-      enabled: true,
+    socialProviders: {
+      google: {
+        clientId: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
+        accessType: "offline",
+        prompt: "select_account consent",
+      },
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     advanced: {
       defaultCookieAttributes: {
-        sameSite: "none",
-        secure: true,
+        sameSite: "lax",
+        secure: false,
         httpOnly: true,
       },
     },

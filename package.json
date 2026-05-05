@@ -23,7 +23,8 @@
       "@orpc/client": "^1.13.14",
       "@types/react": "^19.2.10",
       "@types/react-dom": "^19.2.3",
-      "tailwindcss": "^4.1.18"
+      "tailwindcss": "^4.1.18",
+      "nuqs": "^2.4.3"
     }
   },
   "type": "module",
@@ -49,12 +50,12 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.0",
+    "@biomejs/biome": "^2.4.13",
     "@e-service/config": "workspace:*",
     "@types/bun": "catalog:",
-    "lefthook": "^2.0.13",
-    "turbo": "^2.8.12",
+    "lefthook": "^2.1.6",
+    "turbo": "^2.9.6",
     "typescript": "catalog:"
   },
-  "packageManager": "bun@1.3.12"
+  "packageManager": "bun@1.3.13"
 }

@@ -2,82 +2,78 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Stack
-
-**Better-T-Stack** monorepo: Bun + Turborepo + Elysia + Next.js + oRPC + Drizzle + PostgreSQL + Better-Auth.
-
 ## Commands
 
 ```bash
-# From repo root
-bun install
-bun run dev          # All apps in parallel
-bun run build        # Build all
-bun run check-types  # tsc across all packages
-bun run check        # Biome lint + format fix
+# Dev (all apps via Turbo)
+bun dev
 
-# Scope to one app
-bun run dev:server   # Elysia on :3000
-bun run dev:external      # Next.js on :3001
-bun run dev:internal  # Next.js on :3002
-bun run dev:admin    # Next.js on :3003
+# Dev individual apps
+bun dev:external   # port 3001
+bun dev:internal   # port 3002
+bun dev:admin      # port 3003
+bun dev:server     # port 3000
 
-# Database (runs drizzle-kit against apps/server/.env)
-bun run db:push      # Sync schema → DB (no migration file)
-bun run db:generate  # Generate migration files
-bun run db:migrate   # Run pending migrations
-bun run db:studio    # Open Drizzle Studio
+# Build
+bun build
+
+# Type check
+bun check-types
+
+# Lint & format (Biome)
+bun check          # lint + format check
+bun format         # format write
+bun lint           # lint write
+
+# Database (Drizzle)
+bun db:push        # push schema to DB (no migration file)
+bun db:generate    # generate migration files
+bun db:migrate     # run migrations
+bun db:studio      # open Drizzle Studio
 ```
-
-No test runner is configured yet.
 
 ## Architecture
 
+**Stack:** Better-T-Stack — Bun + Elysia + oRPC + Drizzle + Next.js × 3
+
+### Monorepo Layout
+
+- `apps/server` — Elysia backend (port 3000)
+- `apps/external` — Next.js public-facing app (port 3001)
+- `apps/internal` — Next.js staff-facing app (port 3002)
+- `apps/admin` — Next.js admin app (port 3003)
+- `packages/api` — oRPC router + procedures (`@e-service/api`)
+- `packages/auth` — Better-Auth instance (`@e-service/auth`)
+- `packages/db` — Drizzle ORM + schema (`@e-service/db`)
+- `packages/ui` — Shared React component library (`@e-service/ui`)
+- `packages/env` — Zod-validated env vars (`@e-service/env`)
+- `packages/i18n` — next-intl config + EN/AR messages (`@e-service/i18n`)
+
+### Request Flow
+
 ```
-apps/server   — Elysia HTTP server (port 3000). Mounts oRPC at /rpc, Better-Auth at /api/auth/*, OpenAPI at /api-reference.
-apps/external      — Next.js 15 app router (port 3001). Consumes oRPC via @tanstack/react-query.
-apps/internal      — Next.js 15 app router (port 3002). Consumes oRPC via @tanstack/react-query.
-apps/admin      — Next.js 15 app router (port 3003). Consumes oRPC via @tanstack/react-query.
-
-packages/api  — oRPC router + procedures. publicProcedure and protectedProcedure defined here. Add new routers here.
-packages/auth — Better-Auth instance. Initialized with Drizzle adapter + server env. Imported by both server and api.
-packages/db   — Drizzle ORM factory + schema. All table definitions live in packages/db/src/schema/.
-packages/env  — t3-oss/env-core schemas for server (packages/env/src/server.ts) and web (packages/env/src/web.ts). All env vars validated here.
-packages/ui   — Shared shadcn/ui components + TailwindCSS globals.
-packages/config — Shared tsconfig.base.json.
-```
-
-## Key Patterns
-
-**oRPC end-to-end types:** Procedures in `packages/api` auto-generate client types used in `apps/{external, internal, admin}/src/utils/orpc.ts`. No manual type sharing needed.
-
-**Request context:** Each request gets a typed context (see `packages/api/src/context.ts`) that includes the Better-Auth session. `protectedProcedure` throws if session is absent.
-
-**Env validation:** Never read `process.env` directly. Import from `@e-service/env/server` or `@e-service/env/web`. Adding a new variable requires updating the Zod schema there first.
-
-**Schema changes:** Edit `packages/db/src/schema/`, then run `bun run db:push` (dev) or `bun run db:generate && bun run db:migrate` (prod-style).
-
-**Adding a new route:** Define procedure in `packages/api/src/routers/`, register in `packages/api/src/routers/index.ts`. Client picks it up automatically via TypeScript.
-
-## Tooling
-
-- **Biome** handles lint + format (tabs, double quotes). Pre-commit hook via Lefthook auto-fixes staged files.
-- **Turborepo** caches builds. If a cached build is stale, run `bunx turbo run build --force`.
-- **tsdown** compiles `apps/server` to ESM. `bun run compile` produces a standalone binary.
-
-## Environment
-
-`apps/server/.env`:
-```
-DATABASE_URL=postgresql://postgres:password@localhost:5432/postgres
-BETTER_AUTH_SECRET=<min 32 chars>
-BETTER_AUTH_URL=http://localhost:3000
-EXTERNAL_URL=http://localhost:3001
-INTERNAL_URL=http://localhost:3002
-ADMIN_URL=http://localhost:3003
+Next.js app
+  → apps/*/src/utils/orpc.ts (RPCLink → SERVER_URL/rpc)
+  → apps/server/src/index.ts (Elysia)
+      /api/auth/*  → Better-Auth
+      /rpc*        → oRPC handler (session injected into context)
+      /docs*       → OpenAPI docs
+  → packages/api/ (procedures)
+  → packages/db/  (Drizzle + PostgreSQL)
 ```
 
-`apps/{external,internal,admin}/.env` (all three identical):
-```
-NEXT_PUBLIC_SERVER_URL=http://localhost:3000
-```
+### Key Patterns
+
+**Adding an oRPC procedure:** Define in `packages/api/src/routers/`, use `publicProcedure` or `protectedProcedure` from `packages/api/src/procedures.ts`. Register in the root router.
+
+**Auth context:** Session resolved in `apps/server/src/index.ts`, injected into oRPC context. `protectedProcedure` throws if no session.
+
+**Environment variables:** Import from `@e-service/env/server` (backend) or `@e-service/env/web` (Next.js). Never read `process.env` directly — add new vars to `packages/env/`.
+
+**i18n:** Keys in `packages/i18n/messages/{en,ar}.json`. RTL auto-applied for Arabic. Use `useTranslations()` (client) or `getTranslations()` (server) from next-intl.
+
+**Frontend data fetching:** Use typed oRPC client from `apps/*/src/utils/orpc.ts` with TanStack Query helpers (`orpc.someRoute.useQuery()`, etc.).
+
+**UI components:** Use `@e-service/ui` (Ark UI + Tailwind). Shared CSS from `packages/ui/src/styles/globals.css`.
+
+**Linter:** Biome — `noExplicitAny` disabled, `useExhaustiveDependencies` is info-level, Tailwind class sorting enforced for `cn`/`clsx`/`cva`.

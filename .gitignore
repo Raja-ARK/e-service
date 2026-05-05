@@ -44,6 +44,9 @@ lerna-debug.log*
 coverage
 .nyc_output
 
+# Generated next-intl message declarations
+**/*.d.json.ts
+
 # Misc
 *.tgz
 .cache
