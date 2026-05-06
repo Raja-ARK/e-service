@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@e-service/env": "workspace:*",
+    "@e-service/shared": "workspace:*",
     "dotenv": "catalog:",
     "drizzle-orm": "^0.45.2",
     "pg": "^8.20.0",

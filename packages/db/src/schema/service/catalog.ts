@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, smallint, text, timestamp } from "drizzle-orm/pg-core";
 import { service } from "./service";
 
 export const catalog = pgTable("catalog", {
@@ -18,7 +18,7 @@ export const catalogSubCatalog = pgTable("catalog_sub_catalog", {
   id: text("id").primaryKey(),
   heading: text("heading").notNull(),
   headingAr: text("heading_ar").notNull(),
-  order: integer("order").notNull().default(0),
+  order: smallint("order").notNull().default(0),
   catalogId: text("catalog_id")
     .notNull()
     .references(() => catalog.id, { onDelete: "cascade" }),
@@ -31,7 +31,7 @@ export const catalogPoint = pgTable("catalog_point", {
   id: text("id").primaryKey(),
   text: text("text").notNull(),
   textAr: text("text_ar").notNull(),
-  order: integer("order").notNull().default(0),
+  order: smallint("order").notNull().default(0),
   catalogId: text("catalog_id").references(() => catalog.id, {
     onDelete: "cascade",
   }),

@@ -7,6 +7,9 @@ export const department = pgTable("department", {
   name: text("name").notNull(),
   nameAr: text("name_ar").notNull(),
   isActive: boolean("is_active").notNull().default(true),
+  description: text("description"),
+  descriptionAr: text("description_ar"),
+  logo: text("logo"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

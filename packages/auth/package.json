@@ -13,6 +13,7 @@
   "dependencies": {
     "@e-service/db": "workspace:*",
     "@e-service/env": "workspace:*",
+    "@e-service/shared": "workspace:*",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "zod": "catalog:"

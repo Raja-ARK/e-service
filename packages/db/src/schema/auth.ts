@@ -1,5 +1,29 @@
+import {
+  CURRENCY,
+  DATE_FORMAT,
+  DATE_TIME_FORMAT,
+  HOUR_FORMAT,
+  ITEMS_PER_PAGE,
+  LANGUAGE,
+  THEME,
+  TIME_FORMAT,
+  TIMEZONE,
+} from "@e-service/shared/utils/constant";
 import { relations } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  pgEnum,
+  pgTable,
+  smallint,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
+import { hourFormatEnum, languagesEnum, themeEnum } from "./common";
+
+export const userRoleEnum = pgEnum("role", ["external", "internal", "admin"]);
+
+export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -7,6 +31,25 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  role: userRoleEnum("role").default("external").notNull(),
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires", { withTimezone: true }),
+  gender: genderEnum("gender"),
+  mobile: text("mobile"),
+  nationality: text("nationality"),
+  emirateId: text("emirate_id"),
+  dob: timestamp("dob", { withTimezone: true }),
+  favoriteServiceIds: text("favorite_service_ids").array(),
+  language: languagesEnum("language").default(LANGUAGE),
+  dateFormat: text("date_format").default(DATE_FORMAT),
+  dateTimeFormat: text("date_time_format").default(DATE_TIME_FORMAT),
+  itemsPerPage: smallint("items_per_page").default(ITEMS_PER_PAGE),
+  timeFormat: text("time_format").default(TIME_FORMAT),
+  hourFormat: hourFormatEnum("hour_format").default(HOUR_FORMAT),
+  defaultTheme: themeEnum("theme").default(THEME),
+  timezone: text("timezone").default(TIMEZONE),
+  currency: text("currency").default(CURRENCY),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

@@ -1,0 +1,20 @@
+{
+  "name": "@e-service/shared",
+  "type": "module",
+  "exports": {
+    "./schema/*": {
+      "default": "./src/schema/*.ts"
+    },
+    "./utils/*": {
+      "default": "./src/utils/*.ts"
+    }
+  },
+  "devDependencies": {
+    "@e-service/config": "workspace:*",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "zod": "catalog:",
+    "dayjs": "catalog:"
+  }
+}

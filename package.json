@@ -24,7 +24,8 @@
       "@types/react": "^19.2.10",
       "@types/react-dom": "^19.2.3",
       "tailwindcss": "^4.1.18",
-      "nuqs": "^2.4.3"
+      "nuqs": "^2.4.3",
+      "dayjs": "^1.11.20"
     }
   },
   "type": "module",
