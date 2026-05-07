@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   jsonb,
   pgTable,
@@ -23,25 +24,19 @@ export const lookupOptions = pgTable(
   },
   (table) => [
     unique("lookup_options_type_code_unique").on(table.type, table.code),
+    index("lookup_options_type_idx").on(table.type),
+    index("lookup_options_type_code_idx").on(table.type, table.code),
   ],
 );
 
-// Dependency mapping table. id column not required as it is overkill for a dependency mapping table.
-export const lookupDependencies = pgTable("lookup_dependencies", {
-  parentType: text("parent_type").notNull(), // 'country'
-  parentCode: text("parent_code").notNull(), // 'US'
-  childType: text("child_type").notNull(), // 'state'
-  childCode: text("child_code").notNull(), // 'CA'
-});
-
-// Define composite keys if needed
-export const lookupDependenciesWithKey = pgTable(
+// Parent→child lookup dependency mapping (e.g. country→state, state→city)
+export const lookupDependencies = pgTable(
   "lookup_dependencies",
   {
-    parentType: text("parent_type").notNull(),
-    parentCode: text("parent_code").notNull(),
-    childType: text("child_type").notNull(),
-    childCode: text("child_code").notNull(),
+    parentType: text("parent_type").notNull(), // e.g. 'country'
+    parentCode: text("parent_code").notNull(), // e.g. 'US'
+    childType: text("child_type").notNull(), // e.g. 'state'
+    childCode: text("child_code").notNull(), // e.g. 'CA'
   },
   (table) => [
     primaryKey({
@@ -52,5 +47,6 @@ export const lookupDependenciesWithKey = pgTable(
         table.childCode,
       ],
     }),
+    index("lookup_dep_parent_idx").on(table.parentType, table.parentCode),
   ],
 );

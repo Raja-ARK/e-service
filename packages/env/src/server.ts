@@ -1,4 +1,10 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import { resolve } from "path";
+
+// Load .env from apps/server — fallback for tools (seed, drizzle-kit) run outside that app
+dotenv.config({ path: resolve(import.meta.dir, "../../../apps/server/.env") });
+dotenv.config(); // also try CWD/.env so apps/server works normally
+
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
@@ -13,8 +19,6 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
-    GOOGLE_CLIENT_ID: z.string().min(1),
-    GOOGLE_CLIENT_SECRET: z.string().min(1),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

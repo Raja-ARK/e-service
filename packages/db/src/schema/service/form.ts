@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  index,
   jsonb,
   pgEnum,
   pgTable,
@@ -8,6 +9,7 @@ import {
   smallint,
   text,
   timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { portalTypeEnum } from "../common";
 import { service } from "./service";
@@ -168,19 +170,22 @@ export const fieldTypeEnum = pgEnum("field_type", [
 ]);
 
 export const form = pgTable("form", {
-  id: text("id").primaryKey(),
-  serviceId: text("service_id")
+  id: uuid("id").defaultRandom().primaryKey(),
+  serviceId: uuid("service_id")
     .notNull()
     .unique()
     .references(() => service.id, { onDelete: "cascade" }),
   type: formTypeEnum("type").notNull().default("step"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const formStep = pgTable("form_step", {
-  id: text("id").primaryKey(),
-  formId: text("form_id")
+  id: uuid("id").defaultRandom().primaryKey(),
+  formId: uuid("form_id")
     .notNull()
     .references(() => form.id, { onDelete: "cascade" }),
   code: text("code").notNull(),
@@ -198,13 +203,16 @@ export const formStep = pgTable("form_step", {
     "visibility_condition",
   ).$type<VisibilityCondition>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 // optional subgroup within a step
 export const formGroup = pgTable("form_group", {
-  id: text("id").primaryKey(),
-  stepId: text("step_id")
+  id: uuid("id").defaultRandom().primaryKey(),
+  stepId: uuid("step_id")
     .notNull()
     .references(() => formStep.id, { onDelete: "cascade" }),
   code: text("code").notNull(),
@@ -220,17 +228,20 @@ export const formGroup = pgTable("form_group", {
     "visibility_condition",
   ).$type<VisibilityCondition>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 // junction: which stages show this step
 export const formStepStage = pgTable(
   "form_step_stage",
   {
-    stepId: text("step_id")
+    stepId: uuid("step_id")
       .notNull()
       .references(() => formStep.id, { onDelete: "cascade" }),
-    stageId: text("stage_id")
+    stageId: uuid("stage_id")
       .notNull()
       .references(() => stage.id, { onDelete: "cascade" }),
   },
@@ -241,10 +252,10 @@ export const formStepStage = pgTable(
 export const formGroupStage = pgTable(
   "form_group_stage",
   {
-    groupId: text("group_id")
+    groupId: uuid("group_id")
       .notNull()
       .references(() => formGroup.id, { onDelete: "cascade" }),
-    stageId: text("stage_id")
+    stageId: uuid("stage_id")
       .notNull()
       .references(() => stage.id, { onDelete: "cascade" }),
   },
@@ -255,10 +266,10 @@ export const formGroupStage = pgTable(
 export const formFieldStage = pgTable(
   "form_field_stage",
   {
-    fieldId: text("field_id")
+    fieldId: uuid("field_id")
       .notNull()
       .references(() => formField.id, { onDelete: "cascade" }),
-    stageId: text("stage_id")
+    stageId: uuid("stage_id")
       .notNull()
       .references(() => stage.id, { onDelete: "cascade" }),
   },
@@ -267,80 +278,105 @@ export const formFieldStage = pgTable(
 
 // field belongs to step directly (stepId set, groupId null)
 // OR belongs to a group (groupId set, stepId null)
-export const formField = pgTable("form_field", {
-  id: text("id").primaryKey(),
-  code: text("code").notNull(),
-  stepId: text("step_id").references(() => formStep.id, {
-    onDelete: "cascade",
-  }),
-  groupId: text("group_id").references(() => formGroup.id, {
-    onDelete: "cascade",
-  }),
-  label: text("label").notNull(),
-  labelAr: text("label_ar").notNull(),
-  placeholder: text("placeholder"),
-  placeholderAr: text("placeholder_ar"),
-  helperText: text("helper_text"),
-  helperTextAr: text("helper_text_ar"),
-  type: fieldTypeEnum("type").notNull(),
-  order: smallint("order").notNull().default(0),
-  visibilityCondition: jsonb(
-    "visibility_condition",
-  ).$type<VisibilityCondition>(),
-  hideFor: portalTypeEnum("hide_for"),
-  // type-specific config: accept, maxSize, placeholder, min, max, etc.
-  config: jsonb("config")
-    .$type<FieldConfig>()
-    .default({
-      required: false,
-      disabled: false,
-      minLength: null,
-      maxLength: null,
-      min: null,
-      max: null,
-      defaultValue: null,
-      allowedFileTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"],
-      maxFileSize: 1024 * 1024 * 10, // 10MB
-      maxFileCount: 1,
-      fieldWidth: "full",
-      fieldAlignment: "left",
-      description: null,
-      descriptionAr: null,
-      prefixIcon: null,
-      suffixIcon: null,
-      pattern: null,
-      patternMessage: null,
-      patternMessageAr: null,
-      multiple: null,
+export const formField = pgTable(
+  "form_field",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    code: text("code").notNull(),
+    stepId: uuid("step_id").references(() => formStep.id, {
+      onDelete: "cascade",
     }),
-  canEditInInternal: boolean("can_edit_in_internal").notNull().default(true),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+    groupId: uuid("group_id").references(() => formGroup.id, {
+      onDelete: "cascade",
+    }),
+    label: text("label").notNull(),
+    labelAr: text("label_ar").notNull(),
+    placeholder: text("placeholder"),
+    placeholderAr: text("placeholder_ar"),
+    helperText: text("helper_text"),
+    helperTextAr: text("helper_text_ar"),
+    type: fieldTypeEnum("type").notNull(),
+    order: smallint("order").notNull().default(0),
+    visibilityCondition: jsonb(
+      "visibility_condition",
+    ).$type<VisibilityCondition>(),
+    hideFor: portalTypeEnum("hide_for"),
+    // type-specific config: accept, maxSize, placeholder, min, max, etc.
+    config: jsonb("config")
+      .$type<FieldConfig>()
+      .default({
+        required: false,
+        disabled: false,
+        minLength: null,
+        maxLength: null,
+        min: null,
+        max: null,
+        defaultValue: null,
+        allowedFileTypes: [
+          "image/jpeg",
+          "image/png",
+          "image/gif",
+          "image/webp",
+        ],
+        maxFileSize: 1024 * 1024 * 10, // 10MB
+        maxFileCount: 1,
+        fieldWidth: "full",
+        fieldAlignment: "left",
+        description: null,
+        descriptionAr: null,
+        prefixIcon: null,
+        suffixIcon: null,
+        pattern: null,
+        patternMessage: null,
+        patternMessageAr: null,
+        multiple: null,
+      }),
+    canEditInInternal: boolean("can_edit_in_internal").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("form_field_step_id_idx").on(table.stepId),
+    index("form_field_group_id_idx").on(table.groupId),
+  ],
+);
 
-export const formRule = pgTable("form_rule", {
-  id: text("id").primaryKey(),
-  formId: text("form_id")
-    .notNull()
-    .references(() => form.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  trigger: ruleTriggerEnum("trigger").notNull(),
-  // set when trigger = on_change: which field fires this rule
-  sourceFieldId: text("source_field_id").references(() => formField.id, {
-    onDelete: "cascade",
-  }),
-  // set when trigger = on_next: scopes rule to a specific step
-  stepId: text("step_id").references(() => formStep.id, {
-    onDelete: "cascade",
-  }),
-  // null condition = always run when triggered
-  condition: jsonb("condition").$type<VisibilityCondition>(),
-  actions: jsonb("actions").$type<RuleAction[]>().notNull().default([]),
-  order: smallint("order").notNull().default(0),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+export const formRule = pgTable(
+  "form_rule",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    formId: uuid("form_id")
+      .notNull()
+      .references(() => form.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    trigger: ruleTriggerEnum("trigger").notNull(),
+    // set when trigger = on_change: which field fires this rule
+    sourceFieldId: uuid("source_field_id").references(() => formField.id, {
+      onDelete: "cascade",
+    }),
+    // set when trigger = on_next: scopes rule to a specific step
+    stepId: uuid("step_id").references(() => formStep.id, {
+      onDelete: "cascade",
+    }),
+    // null condition = always run when triggered
+    condition: jsonb("condition").$type<VisibilityCondition>(),
+    actions: jsonb("actions").$type<RuleAction[]>().notNull().default([]),
+    order: smallint("order").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("form_rule_form_id_idx").on(table.formId),
+    index("form_rule_form_order_idx").on(table.formId, table.order),
+  ],
+);
 
 export const formRelations = relations(form, ({ one, many }) => ({
   service: one(service, {

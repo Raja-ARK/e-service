@@ -14,6 +14,30 @@ import {
 } from "@e-service/shared/utils/constant";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { createAccessControl } from "better-auth/plugins/access";
+import { admin } from "better-auth/plugins/admin";
+import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
+import { bearer } from "better-auth/plugins/bearer";
+import { emailOTP } from "better-auth/plugins/email-otp";
+import { jwt } from "better-auth/plugins/jwt";
+
+const statement = {
+  ...defaultStatements,
+} as const;
+
+const ac = createAccessControl(statement);
+
+const adminRole = ac.newRole({
+  ...adminAc.statements,
+});
+
+const internalRole = ac.newRole({
+  user: ["list", "get"],
+});
+
+const externalRole = ac.newRole({
+  user: ["get"],
+});
 
 export const createAuth = () => {
   const db = createDb();
@@ -23,15 +47,10 @@ export const createAuth = () => {
       provider: "pg",
       schema: schema,
     }),
-    trustedOrigins: [env.EXTERNAL_URL, env.INTERNAL_URL, env.ADMIN_URL],
-    socialProviders: {
-      google: {
-        clientId: env.GOOGLE_CLIENT_ID,
-        clientSecret: env.GOOGLE_CLIENT_SECRET,
-        accessType: "offline",
-        prompt: "select_account consent",
-      },
+    emailAndPassword: {
+      enabled: true,
     },
+    trustedOrigins: [env.EXTERNAL_URL, env.INTERNAL_URL, env.ADMIN_URL],
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     advanced: {
@@ -78,11 +97,6 @@ export const createAuth = () => {
           defaultValue: null,
           required: false,
         },
-        favoriteServiceIds: {
-          type: "string[]",
-          defaultValue: [],
-          required: false,
-        },
         language: {
           type: ["english", "arabic"],
           defaultValue: LANGUAGE,
@@ -122,7 +136,44 @@ export const createAuth = () => {
         },
       },
     },
-    plugins: [],
+    plugins: [
+      admin({
+        ac,
+        roles: {
+          admin: adminRole,
+          internal: internalRole,
+          external: externalRole,
+        },
+        defaultRole: "external",
+      }),
+      bearer(),
+      jwt({
+        jwt: {
+          expirationTime: 60 * 15,
+        },
+      }),
+      emailOTP({
+        otpLength: 6,
+        expiresIn: 60 * 10,
+        async sendVerificationOTP({ email, otp, type }, ctx) {
+          console.log(`[Auth] Sending OTP to ${email}: ${otp} (type: ${type})`);
+          if (type === "change-email") {
+            return;
+          }
+          // void sendAuthEmail({
+          //   email,
+          //   otp,
+          //   type:
+          //     ctx?.path === "/sign-up/email"
+          //       ? "sign-up"
+          //       : type === "sign-in"
+          //         ? "email-verification"
+          //         : type,
+          // });
+        },
+        sendVerificationOnSignUp: true,
+      }),
+    ],
   });
 };
 

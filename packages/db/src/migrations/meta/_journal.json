@@ -8,6 +8,20 @@
       "when": 1777981790970,
       "tag": "0000_absurd_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778152797723,
+      "tag": "0001_amazing_black_cat",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778160568738,
+      "tag": "0002_flowery_guardsmen",
+      "breakpoints": true
     }
   ]
 }

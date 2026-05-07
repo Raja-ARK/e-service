@@ -41,6 +41,7 @@
     "db:studio": "turbo -F @e-service/db db:studio",
     "db:generate": "turbo -F @e-service/db db:generate",
     "db:migrate": "turbo -F @e-service/db db:migrate",
+    "db:seed": "turbo -F @e-service/db db:seed",
     "check": "biome check --write .",
     "format": "biome format --write .",
     "lint": "biome lint --write ."
