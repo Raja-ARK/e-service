@@ -16,6 +16,8 @@ export const env = createEnv({
     INTERNAL_URL: z.url(),
     EXTERNAL_URL: z.url(),
     ADMIN_URL: z.url(),
+    RESEND_API_KEY: z.string().min(1),
+    RESEND_FROM_EMAIL: z.email(),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),

@@ -1,4 +1,4 @@
-import {
+﻿import {
   boolean,
   index,
   pgEnum,
@@ -24,8 +24,10 @@ export const emailTemplate = pgTable(
     html: text("html").notNull(),
     type: emailTemplateTypeEnum("type").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),

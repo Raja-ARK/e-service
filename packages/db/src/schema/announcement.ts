@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+﻿import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { categoryEnum } from "./common";
 
 export const announcement = pgTable("announcement", {
@@ -8,15 +8,17 @@ export const announcement = pgTable("announcement", {
   description: text("description"),
   descriptionAr: text("description_ar"),
   attachment: text("attachment"),
-  issueDate: timestamp("issue_date").notNull(),
-  effectiveFrom: timestamp("effective_from").notNull(),
-  effectiveTo: timestamp("effective_to"),
+  issueDate: timestamp("issue_date", { withTimezone: true }).notNull(),
+  effectiveFrom: timestamp("effective_from", { withTimezone: true }).notNull(),
+  effectiveTo: timestamp("effective_to", { withTimezone: true }),
   category: categoryEnum("category")
     .array()
     .notNull()
     .default(["corporate", "professional"]),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),

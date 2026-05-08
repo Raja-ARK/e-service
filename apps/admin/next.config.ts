@@ -4,7 +4,10 @@ import type { NextConfig } from "next";
 
 const withNextIntl = createNextIntlPlugin({
   experimental: {
-    createMessagesDeclaration: "../../packages/i18n/src/messages/en.json",
+    createMessagesDeclaration: [
+      "../../packages/i18n/src/messages/en.json",
+      "../../packages/i18n/src/messages/ar.json",
+    ],
   },
 });
 

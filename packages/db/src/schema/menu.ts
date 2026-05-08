@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+﻿import { relations } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 import {
   boolean,
@@ -31,8 +31,10 @@ export const menu = pgTable("menu", {
   disabled: boolean("disabled").default(false).notNull(),
   order: integer("order").default(0).notNull(),
   type: menuTypeEnum("type").default("internal").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),

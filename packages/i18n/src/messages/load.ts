@@ -1,6 +1,9 @@
+import type { AbstractIntlMessages } from "next-intl";
 import type { Locale } from "../routing";
 
-export async function loadMessages(locale: Locale) {
+export async function loadMessages(
+  locale: Locale,
+): Promise<AbstractIntlMessages> {
   switch (locale) {
     case "ar":
       return (await import("./ar.json")).default;

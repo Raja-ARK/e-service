@@ -20,6 +20,7 @@ import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
 import { bearer } from "better-auth/plugins/bearer";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { jwt } from "better-auth/plugins/jwt";
+import { sendAuthEmail } from "./email";
 
 const statement = {
   ...defaultStatements,
@@ -136,6 +137,20 @@ export const createAuth = () => {
         },
       },
     },
+    session: {
+      expiresIn: 60 * 60 * 24 * 7,
+      updateAge: 60 * 60 * 24,
+      cookieCache: {
+        enabled: true,
+        maxAge: 60 * 5,
+      },
+      additionalFields: {
+        aqUserData: {
+          type: "string",
+          required: false,
+        },
+      },
+    },
     plugins: [
       admin({
         ac,
@@ -156,20 +171,18 @@ export const createAuth = () => {
         otpLength: 6,
         expiresIn: 60 * 10,
         async sendVerificationOTP({ email, otp, type }, ctx) {
-          console.log(`[Auth] Sending OTP to ${email}: ${otp} (type: ${type})`);
-          if (type === "change-email") {
-            return;
-          }
-          // void sendAuthEmail({
-          //   email,
-          //   otp,
-          //   type:
-          //     ctx?.path === "/sign-up/email"
-          //       ? "sign-up"
-          //       : type === "sign-in"
-          //         ? "email-verification"
-          //         : type,
-          // });
+          if (type === "change-email") return;
+
+          await sendAuthEmail({
+            email,
+            otp,
+            type:
+              ctx?.path === "/sign-up/email"
+                ? "sign-up"
+                : type === "sign-in"
+                  ? "email-verification"
+                  : type,
+          });
         },
         sendVerificationOnSignUp: true,
       }),

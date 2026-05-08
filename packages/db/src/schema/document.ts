@@ -1,4 +1,4 @@
-import {
+﻿import {
   boolean,
   index,
   pgTable,
@@ -15,8 +15,10 @@ export const documentTemplate = pgTable(
     nameAr: text("name_ar"),
     html: text("html").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),

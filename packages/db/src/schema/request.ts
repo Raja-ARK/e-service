@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+﻿import { relations } from "drizzle-orm";
 import {
   index,
   jsonb,
@@ -24,7 +24,9 @@ export const request = pgTable(
     serviceRequestNo: text("service_request_no").unique().notNull(),
     status: text("status").notNull(),
     statusAr: text("status_ar").notNull(),
-    submissionDate: timestamp("submission_date").defaultNow().notNull(),
+    submissionDate: timestamp("submission_date", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
     requestedUserId: text("requested_user_id")
       .references(() => user.id)
       .notNull(),
@@ -34,11 +36,13 @@ export const request = pgTable(
     professionalId: uuid("professional_id").references(() => professional.id),
     paymentStatus: text("payment_status"),
     paymentStatusAr: text("payment_status_ar"),
-    completedAt: timestamp("completed_at"),
-    cancelledAt: timestamp("cancelled_at"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
     formData: jsonb("form_data").$type<Record<string, unknown>>(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
@@ -66,7 +70,7 @@ export const requestHistory = pgTable(
     stageId: uuid("stage_id")
       .references(() => stage.id)
       .notNull(),
-    stageCompletedAt: timestamp("stage_completed_at"),
+    stageCompletedAt: timestamp("stage_completed_at", { withTimezone: true }),
     actionId: uuid("action_id").references(() => action.id),
     performedByUserId: text("performed_by_user_id")
       .references(() => user.id)
@@ -76,8 +80,10 @@ export const requestHistory = pgTable(
     statusAr: text("status_ar"),
     paymentStatus: text("payment_status"),
     paymentStatusAr: text("payment_status_ar"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),

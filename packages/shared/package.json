@@ -2,12 +2,11 @@
   "name": "@e-service/shared",
   "type": "module",
   "exports": {
-    "./schema/*": {
-      "default": "./src/schema/*.ts"
-    },
+    "./schema": "./src/schema.ts",
     "./utils/*": {
       "default": "./src/utils/*.ts"
-    }
+    },
+    "./types": "./src/types.ts"
   },
   "devDependencies": {
     "@e-service/config": "workspace:*",

@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+﻿import { relations } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -72,8 +72,10 @@ export const service = pgTable(
       .default([]),
     createdByUserId: text("created_by_user_id").references(() => user.id),
     updatedByUserId: text("updated_by_user_id").references(() => user.id),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at")
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),

@@ -7,7 +7,10 @@
     },
     "./*": {
       "default": "./src/*.ts"
-    }
+    },
+    "./drizzle-orm": "./src/drizzle/orm.ts",
+    "./drizzle-zod": "./src/drizzle/zod.ts",
+    "./zod-schemas/*": "./src/zod-schemas/*.ts"
   },
   "scripts": {
     "db:push": "drizzle-kit push",
@@ -21,6 +24,7 @@
     "@e-service/shared": "workspace:*",
     "dotenv": "catalog:",
     "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
     "pg": "^8.20.0",
     "zod": "catalog:"
   },

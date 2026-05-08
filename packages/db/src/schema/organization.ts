@@ -1,4 +1,4 @@
-import {
+﻿import {
   CURRENCY,
   DATE_FORMAT,
   DATE_TIME_FORMAT,
@@ -26,8 +26,10 @@ export const organization = pgTable("organization", {
   hourFormat: hourFormatEnum("hour_format").notNull().default(HOUR_FORMAT),
   defaultTheme: themeEnum("theme").notNull().default(THEME),
   itemsPerPage: smallint("items_per_page").notNull().default(ITEMS_PER_PAGE),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at")
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
