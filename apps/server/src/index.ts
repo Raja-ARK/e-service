@@ -1,9 +1,9 @@
 /** biome-ignore-all lint/correctness/noUnusedVariables: Suppressing this rule for the server index file */
 import { createContext } from "@e-service/api/context";
 import { appRouter } from "@e-service/api/routers/index";
-import { auth } from "@e-service/auth";
 import { env } from "@e-service/env/server";
 import { cors } from "@elysiajs/cors";
+import { SmartCoercionPlugin } from "@orpc/json-schema";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
@@ -12,6 +12,11 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { Elysia } from "elysia";
 
 const rpcHandler = new RPCHandler(appRouter, {
+  plugins: [
+    new SmartCoercionPlugin({
+      schemaConverters: [new ZodToJsonSchemaConverter()],
+    }),
+  ],
   interceptors: [
     onError((error) => {
       console.error(error);
@@ -21,6 +26,9 @@ const rpcHandler = new RPCHandler(appRouter, {
 const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [
     new OpenAPIReferencePlugin({
+      schemaConverters: [new ZodToJsonSchemaConverter()],
+    }),
+    new SmartCoercionPlugin({
       schemaConverters: [new ZodToJsonSchemaConverter()],
     }),
   ],
@@ -37,13 +45,8 @@ const app = new Elysia()
     cors({
       origin: [env.EXTERNAL_URL, env.INTERNAL_URL, env.ADMIN_URL],
       methods: ["GET", "POST", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
-      credentials: true,
     }),
   )
-  // For better-auth to work, we don't need to include in our routing document.
-  .post("/api/auth/sign-in/social", ({ request }) => auth.handler(request))
-  .get("/api/auth/callback/:provider", ({ request }) => auth.handler(request))
   // For RPC call
   .all(
     "/rpc*",

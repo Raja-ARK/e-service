@@ -18,6 +18,7 @@
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
+    "@orpc/json-schema": "catalog:",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "elysia": "catalog:",

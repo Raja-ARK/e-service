@@ -25,6 +25,7 @@
       "@types/react-dom": "^19.2.3",
       "tailwindcss": "^4.1.18",
       "nuqs": "^2.4.3",
+      "@orpc/json-schema": "^1.14.2",
       "dayjs": "^1.11.20"
     }
   },
