@@ -17,6 +17,15 @@ import type {
 import { SIGNUP_ALLOWED_ORIGINS } from "../utils/constant";
 import { createError } from "../utils/error";
 
+const forwardCookies = (
+  headers: Headers | null | undefined,
+  context: Context,
+) => {
+  if (!headers) return;
+  const cookies: string[] = headers.getSetCookie?.() ?? [];
+  context.responseCookies.push(...cookies);
+};
+
 export const signIn = async ({
   input,
   context,
@@ -30,21 +39,27 @@ export const signIn = async ({
       role: true,
     },
   });
+
   if (!userRole) {
     throw createError("Invalid email or password", "BAD_REQUEST");
   }
-  const data = await auth.api.signInEmail({
+
+  const result = await auth.api.signInEmail({
     body: { email: input.email, password: input.password, rememberMe: true },
     headers: context.headers,
+    returnHeaders: true,
   });
 
-  if (!data?.user || !data?.token) {
+  const data = result.response;
+
+  if (!data?.user) {
     throw createError("Invalid email or password", "BAD_REQUEST");
   }
 
+  forwardCookies(result.headers, context);
+
   return {
-    token: data?.token,
-    user: data?.user as unknown as User,
+    user: data.user as unknown as User,
   };
 };
 
@@ -74,10 +89,13 @@ export const signUp = async ({
     throw createError("User already exists", "BAD_REQUEST");
   }
 
-  const data = await auth.api.signUpEmail({
+  const result = await auth.api.signUpEmail({
     body: input,
     headers: context.headers,
+    returnHeaders: true,
   });
+
+  const data = result.response;
 
   if (!data?.user) {
     throw createError("Failed to sign up", "BAD_REQUEST");
@@ -87,8 +105,9 @@ export const signUp = async ({
     await db.insert(professional).values({ userId: data.user.id });
   }
 
+  forwardCookies(result.headers, context);
+
   return {
-    token: data.token,
     user: data.user as unknown as User,
   };
 };
@@ -201,12 +220,27 @@ export const resetPassword = async ({
 };
 
 export const signOut = async ({ context }: { context: Context }) => {
-  await auth.api.signOut({
+  const result = await auth.api.signOut({
     headers: context.headers,
+    returnHeaders: true,
   });
+
+  forwardCookies(result.headers, context);
 
   return {
     success: true,
     message: "Signed out successfully",
+  };
+};
+
+export const getUser = async ({ context }: { context: Context }) => {
+  const session = await auth.api.getSession({ headers: context.headers });
+
+  if (!session?.user) {
+    throw createError("Unauthorized", "UNAUTHORIZED");
+  }
+
+  return {
+    user: session.user as unknown as User,
   };
 };

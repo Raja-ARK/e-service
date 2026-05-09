@@ -1,5 +1,6 @@
+import { auth } from "@e-service/auth";
+import type { Session, User } from "@e-service/db/zod-schemas/auth";
 import { ORPCError, os } from "@orpc/server";
-
 import type { Context } from "./context";
 
 export const o = os.$context<Context>();
@@ -7,13 +8,19 @@ export const o = os.$context<Context>();
 export const publicProcedure = o;
 
 const requireAuth = o.middleware(async ({ context, next }) => {
-  if (!context.session?.user) {
-    throw new ORPCError("UNAUTHORIZED");
-  }
+  const session = await auth.api.getSession({ headers: context.headers });
+
+  if (!session?.user || !session?.session) throw new ORPCError("UNAUTHORIZED");
+
   return next({
     context: {
-      session: context.session,
+      session: {
+        user: session.user as unknown as User,
+        session: session.session as unknown as Session,
+      },
       headers: context.headers,
+      origin: context.origin,
+      responseCookies: context.responseCookies,
     },
   });
 });

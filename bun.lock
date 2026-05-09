@@ -251,7 +251,6 @@
       },
       "devDependencies": {
         "@e-service/config": "workspace:*",
-        "@e-service/db": "workspace:*",
         "typescript": "catalog:",
       },
     },

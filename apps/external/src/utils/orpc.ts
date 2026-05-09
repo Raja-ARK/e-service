@@ -6,16 +6,7 @@ import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 
 export const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    // onError: (error, query) => {
-    // toast.error(`Error: ${error.message}`, {
-    //   action: {
-    //     label: "retry",
-    //     onClick: query.invalidate,
-    //   },
-    // });
-    // },
-  }),
+  queryCache: new QueryCache(),
 });
 
 export const link = new RPCLink({
@@ -27,10 +18,7 @@ export const link = new RPCLink({
     });
   },
   headers: async () => {
-    if (typeof window !== "undefined") {
-      return {};
-    }
-
+    if (typeof window !== "undefined") return {};
     const { headers } = await import("next/headers");
     return Object.fromEntries(await headers());
   },

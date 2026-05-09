@@ -6,9 +6,10 @@ import { cors } from "@elysiajs/cors";
 import { SmartCoercionPlugin } from "@orpc/json-schema";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
-import { onError } from "@orpc/server";
+import { ORPCError, onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
+import { isAPIError } from "better-auth/api";
 import { Elysia } from "elysia";
 
 const rpcHandler = new RPCHandler(appRouter, {
@@ -20,13 +21,26 @@ const rpcHandler = new RPCHandler(appRouter, {
   interceptors: [
     onError((error) => {
       console.error(error);
+      if (isAPIError(error)) {
+        throw new ORPCError("BAD_REQUEST", { message: error.message });
+      }
     }),
   ],
 });
 const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [
     new OpenAPIReferencePlugin({
+      docsTitle: "E-Services Digital Platform",
+      docsPath: "/doc",
+      specPath: "/openapi.json",
       schemaConverters: [new ZodToJsonSchemaConverter()],
+      specGenerateOptions: {
+        info: {
+          title: "E-Services Digital Platform",
+          description: "E-Services Digital Platform API",
+          version: "1.0.0",
+        },
+      },
     }),
     new SmartCoercionPlugin({
       schemaConverters: [new ZodToJsonSchemaConverter()],
@@ -35,6 +49,9 @@ const apiHandler = new OpenAPIHandler(appRouter, {
   interceptors: [
     onError((error) => {
       console.error(error);
+      if (isAPIError(error)) {
+        throw new ORPCError("BAD_REQUEST", { message: error.message });
+      }
     }),
   ],
 });
@@ -44,31 +61,45 @@ const app = new Elysia()
   .use(
     cors({
       origin: [env.EXTERNAL_URL, env.INTERNAL_URL, env.ADMIN_URL],
-      methods: ["GET", "POST", "OPTIONS"],
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+      credentials: true,
     }),
   )
   // For RPC call
   .all(
     "/rpc*",
-    async (context) => {
-      const { response } = await rpcHandler.handle(context.request, {
+    async (elysiaCtx) => {
+      const orpcContext = await createContext({ context: elysiaCtx });
+      const { response } = await rpcHandler.handle(elysiaCtx.request, {
         prefix: "/rpc",
-        context: await createContext({ context }),
+        context: orpcContext,
       });
-      return response ?? new Response("Not Found", { status: 404 });
+      const base = response ?? new Response("Not Found", { status: 404 });
+      if (orpcContext.responseCookies.length === 0) return base;
+      const headers = new Headers(base.headers);
+      for (const cookie of orpcContext.responseCookies)
+        headers.append("Set-Cookie", cookie);
+      return new Response(base.body, { status: base.status, headers });
     },
     {
       parse: "none",
     },
   )
   .all(
-    "/docs*",
-    async (context) => {
-      const { response } = await apiHandler.handle(context.request, {
-        prefix: "/docs",
-        context: await createContext({ context }),
+    "/api*",
+    async (elysiaCtx) => {
+      const orpcContext = await createContext({ context: elysiaCtx });
+      const { response } = await apiHandler.handle(elysiaCtx.request, {
+        prefix: "/api",
+        context: orpcContext,
       });
-      return response ?? new Response("Not Found", { status: 404 });
+      const base = response ?? new Response("Not Found", { status: 404 });
+      if (orpcContext.responseCookies.length === 0) return base;
+      const headers = new Headers(base.headers);
+      for (const cookie of orpcContext.responseCookies)
+        headers.append("Set-Cookie", cookie);
+      return new Response(base.body, { status: base.status, headers });
     },
     {
       parse: "none",

@@ -19,6 +19,7 @@ export async function sendAuthEmail({
   otp: string;
   type: EmailType;
 }) {
+  console.log(email, otp, type, "email, otp, type");
   const [template] = await db
     .select()
     .from(emailTemplate)
@@ -47,12 +48,17 @@ export async function sendAuthEmail({
   const subject = ejs.render(subjectTemplate, templateVars);
   const html = ejs.render(htmlTemplate, templateVars);
 
-  const { error } = await resend.emails.send({
+  const { error, data } = await resend.emails.send({
     from: env.RESEND_FROM_EMAIL,
-    to: email,
+    to:
+      env.NODE_ENV === "development" && env.RESEND_TEST_EMAIL
+        ? env.RESEND_TEST_EMAIL
+        : email,
     subject,
     html,
   });
+
+  console.log(data, "data");
 
   if (error) {
     throw new Error(error.message);

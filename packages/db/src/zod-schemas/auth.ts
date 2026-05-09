@@ -6,3 +6,4 @@ export const userSchema = createSelectSchema(user);
 export const sessionSchema = createSelectSchema(session);
 
 export type User = z.infer<typeof userSchema>;
+export type Session = z.infer<typeof sessionSchema>;

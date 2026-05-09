@@ -17,9 +17,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAccessControl } from "better-auth/plugins/access";
 import { admin } from "better-auth/plugins/admin";
 import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
-import { bearer } from "better-auth/plugins/bearer";
 import { emailOTP } from "better-auth/plugins/email-otp";
-import { jwt } from "better-auth/plugins/jwt";
 import { sendAuthEmail } from "./email";
 
 const statement = {
@@ -50,6 +48,9 @@ export const createAuth = () => {
     }),
     emailAndPassword: {
       enabled: true,
+      requireEmailVerification: true,
+      minPasswordLength: 8,
+      maxPasswordLength: 16,
     },
     trustedOrigins: [env.EXTERNAL_URL, env.INTERNAL_URL, env.ADMIN_URL],
     secret: env.BETTER_AUTH_SECRET,
@@ -144,12 +145,6 @@ export const createAuth = () => {
         enabled: true,
         maxAge: 60 * 5,
       },
-      additionalFields: {
-        aqUserData: {
-          type: "string",
-          required: false,
-        },
-      },
     },
     plugins: [
       admin({
@@ -160,12 +155,6 @@ export const createAuth = () => {
           external: externalRole,
         },
         defaultRole: "external",
-      }),
-      bearer(),
-      jwt({
-        jwt: {
-          expirationTime: 60 * 15,
-        },
       }),
       emailOTP({
         otpLength: 6,

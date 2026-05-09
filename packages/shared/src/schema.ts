@@ -15,26 +15,29 @@ export const emailSchema = z.email({
   },
 });
 
-export const passwordSchema = z
-  .string()
-  .min(8, {
-    message: "Password must be at least 8 characters long",
-  })
-  .max(16, {
-    message: "Password must be less than 16 characters long",
-  });
-
-export const otpSchema = z.string().length(6, {
-  message: "OTP must be 6 characters long",
-});
-
-export const arabicNameSchema = z
-  .string()
-  .regex(
-    /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]+$/,
-  );
-
-export const dateCodecSchema = z.codec(z.iso.date(), z.date(), {
-  decode: (isoString) => new Date(isoString),
-  encode: (date) => date.toISOString(),
+export const passwordSchema = z.string().check(({ issues, value }) => {
+  if (value === null || value === undefined || value === "") {
+    issues.push({
+      code: "custom",
+      message: "Password is required",
+      input: value,
+    });
+    return;
+  }
+  if (value.length < 8) {
+    issues.push({
+      code: "custom",
+      message: "Password must be at least 8 characters long",
+      input: value,
+    });
+    return;
+  }
+  if (value.length > 16) {
+    issues.push({
+      code: "custom",
+      message: "Password must be less than 16 characters long",
+      input: value,
+    });
+    return;
+  }
 });

@@ -12,6 +12,13 @@ const withNextIntl = createNextIntlPlugin({
 });
 
 const nextConfig: NextConfig = {
+  transpilePackages: [
+    "@e-service/api",
+    "@e-service/env",
+    "@e-service/i18n",
+    "@e-service/shared",
+    "@e-service/ui",
+  ],
   typedRoutes: true,
   reactCompiler: true,
 };
