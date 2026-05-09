@@ -146,10 +146,20 @@ export const sendVerificationEmail = async ({
   };
 };
 
-export const verifyEmailOtp = async ({ email, otp }: VerifyEmailOTPInput) => {
-  await auth.api.verifyEmailOTP({
-    body: { email, otp },
+export const verifyEmailOtp = async ({
+  input,
+  context,
+}: {
+  input: VerifyEmailOTPInput;
+  context: Context;
+}) => {
+  const result = await auth.api.verifyEmailOTP({
+    body: { email: input.email, otp: input.otp },
+    headers: context.headers,
+    returnHeaders: true,
   });
+
+  forwardCookies(result.headers, context);
 
   return {
     success: true,

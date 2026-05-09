@@ -55,8 +55,8 @@ const verifyEmail = protectedProcedure
   })
   .input(authSchema.verifyEmailOTPInputSchema)
   .output(successResponseSchema)
-  .handler(async ({ input }) => {
-    return await authServices.verifyEmailOtp(input);
+  .handler(async ({ input, context }) => {
+    return await authServices.verifyEmailOtp({ input, context });
   });
 
 const forgetPassword = publicProcedure
