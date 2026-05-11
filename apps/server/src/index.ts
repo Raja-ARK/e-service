@@ -40,6 +40,15 @@ const apiHandler = new OpenAPIHandler(appRouter, {
           description: "E-Services Digital Platform API",
           version: "1.0.0",
         },
+        security: [{ bearerAuth: [] }],
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: "http",
+              scheme: "bearer",
+            },
+          },
+        },
       },
     }),
     new SmartCoercionPlugin({
@@ -69,18 +78,14 @@ const app = new Elysia()
   // For RPC call
   .all(
     "/rpc*",
-    async (elysiaCtx) => {
-      const orpcContext = await createContext({ context: elysiaCtx });
-      const { response } = await rpcHandler.handle(elysiaCtx.request, {
+    async (ctx) => {
+      const orpcContext = await createContext({ context: ctx });
+
+      const { response } = await rpcHandler.handle(ctx.request, {
         prefix: "/rpc",
         context: orpcContext,
       });
-      const base = response ?? new Response("Not Found", { status: 404 });
-      if (orpcContext.responseCookies.length === 0) return base;
-      const headers = new Headers(base.headers);
-      for (const cookie of orpcContext.responseCookies)
-        headers.append("Set-Cookie", cookie);
-      return new Response(base.body, { status: base.status, headers });
+      return response ?? new Response("Not Found", { status: 404 });
     },
     {
       parse: "none",
@@ -88,18 +93,13 @@ const app = new Elysia()
   )
   .all(
     "/api*",
-    async (elysiaCtx) => {
-      const orpcContext = await createContext({ context: elysiaCtx });
-      const { response } = await apiHandler.handle(elysiaCtx.request, {
+    async (ctx) => {
+      const orpcContext = await createContext({ context: ctx });
+      const { response } = await apiHandler.handle(ctx.request, {
         prefix: "/api",
         context: orpcContext,
       });
-      const base = response ?? new Response("Not Found", { status: 404 });
-      if (orpcContext.responseCookies.length === 0) return base;
-      const headers = new Headers(base.headers);
-      for (const cookie of orpcContext.responseCookies)
-        headers.append("Set-Cookie", cookie);
-      return new Response(base.body, { status: base.status, headers });
+      return response ?? new Response("Not Found", { status: 404 });
     },
     {
       parse: "none",

@@ -14,6 +14,7 @@ import {
 } from "@e-service/shared/utils/constant";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { bearer, jwt } from "better-auth/plugins";
 import { createAccessControl } from "better-auth/plugins/access";
 import { admin } from "better-auth/plugins/admin";
 import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
@@ -158,11 +159,13 @@ export const createAuth = () => {
       }),
       emailOTP({
         otpLength: 6,
+
         expiresIn: 60 * 10,
+
         async sendVerificationOTP({ email, otp, type }, ctx) {
           if (type === "change-email") return;
 
-          await sendAuthEmail({
+          void sendAuthEmail({
             email,
             otp,
             type:
@@ -175,6 +178,10 @@ export const createAuth = () => {
         },
         sendVerificationOnSignUp: true,
       }),
+      bearer({
+        requireSignature: true,
+      }),
+      jwt({}),
     ],
   });
 };

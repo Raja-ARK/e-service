@@ -17,15 +17,6 @@ import type {
 import { SIGNUP_ALLOWED_ORIGINS } from "../utils/constant";
 import { createError } from "../utils/error";
 
-const forwardCookies = (
-  headers: Headers | null | undefined,
-  context: Context,
-) => {
-  if (!headers) return;
-  const cookies: string[] = headers.getSetCookie?.() ?? [];
-  context.responseCookies.push(...cookies);
-};
-
 export const signIn = async ({
   input,
   context,
@@ -56,10 +47,15 @@ export const signIn = async ({
     throw createError("Invalid email or password", "BAD_REQUEST");
   }
 
-  forwardCookies(result.headers, context);
+  const token = result.headers.get("set-auth-token") ?? "";
+
+  if (!token) {
+    throw createError("Failed to issue session token", "INTERNAL_SERVER_ERROR");
+  }
 
   return {
     user: data.user as unknown as User,
+    token,
   };
 };
 
@@ -105,10 +101,15 @@ export const signUp = async ({
     await db.insert(professional).values({ userId: data.user.id });
   }
 
-  forwardCookies(result.headers, context);
+  const token = result.headers.get("set-auth-token") ?? "";
+
+  // if (!token) {
+  //   throw createError("Failed to issue session token", "INTERNAL_SERVER_ERROR");
+  // }
 
   return {
     user: data.user as unknown as User,
+    token,
   };
 };
 
@@ -153,13 +154,13 @@ export const verifyEmailOtp = async ({
   input: VerifyEmailOTPInput;
   context: Context;
 }) => {
-  const result = await auth.api.verifyEmailOTP({
+  await auth.api.verifyEmailOTP({
     body: { email: input.email, otp: input.otp },
     headers: context.headers,
     returnHeaders: true,
   });
 
-  forwardCookies(result.headers, context);
+  // forwardCookies(result.headers, context);
 
   return {
     success: true,
@@ -179,7 +180,7 @@ export const forgetPassword = async ({ email }: ForgetPasswordInput) => {
     throw createError("User not found", "NOT_FOUND");
   }
 
-  await auth.api.forgetPasswordEmailOTP({
+  await auth.api.requestPasswordResetEmailOTP({
     body: { email },
   });
 
@@ -230,12 +231,12 @@ export const resetPassword = async ({
 };
 
 export const signOut = async ({ context }: { context: Context }) => {
-  const result = await auth.api.signOut({
+  await auth.api.signOut({
     headers: context.headers,
     returnHeaders: true,
   });
 
-  forwardCookies(result.headers, context);
+  // forwardCookies(result.headers, context);
 
   return {
     success: true,

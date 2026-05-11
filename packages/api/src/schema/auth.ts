@@ -6,12 +6,13 @@ import { ARABIC_NAME_REGEX } from "@e-service/shared/utils/constant";
 import { z } from "zod";
 
 export const signInInput = z.object({
-  email: emailSchema,
+  email: emailSchema.transform((email) => email.toLowerCase()),
   password: passwordSchema,
 });
 
 export const signInOutput = z.object({
   user: userSchema,
+  token: z.string(),
 });
 
 export const signUpInputSchema = createInsertSchema(user, {
@@ -28,7 +29,7 @@ export const signUpInputSchema = createInsertSchema(user, {
       }
     })
     .nullish(),
-  email: emailSchema,
+  email: emailSchema.transform((email) => email.toLowerCase()),
   name: z.string().check(({ issues, value }) => {
     if (value === null || value === undefined || value === "") {
       issues.push({
@@ -90,15 +91,16 @@ export const signUpInputSchema = createInsertSchema(user, {
 
 export const signUpOutputSchema = z.object({
   user: userSchema,
+  token: z.string().optional().nullable(),
 });
 
 export const verifyEmailOTPInputSchema = z.object({
-  email: emailSchema,
+  email: emailSchema.transform((email) => email.toLowerCase()),
   otp: z.string().length(6),
 });
 
 export const forgetPasswordInputSchema = z.object({
-  email: emailSchema,
+  email: emailSchema.transform((email) => email.toLowerCase()),
 });
 
 export const changePasswordInputSchema = z
@@ -118,13 +120,13 @@ export const changePasswordInputSchema = z
   });
 
 export const resetPasswordInputSchema = z.object({
-  email: emailSchema,
+  email: emailSchema.transform((email) => email.toLowerCase()),
   otp: z.string().length(6),
   password: passwordSchema,
 });
 
 export const sendVerificationEmailInputSchema = z.object({
-  email: emailSchema,
+  email: emailSchema.transform((email) => email.toLowerCase()),
   type: z.enum(["email-verification", "forget-password", "sign-in"]),
 });
 

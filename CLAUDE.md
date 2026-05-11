@@ -34,7 +34,7 @@ bun db:studio      # open Drizzle Studio
 
 ## Architecture
 
-**Stack:** Better-T-Stack — Bun + Elysia + oRPC + Drizzle + Next.js × 3
+**Stack:**  Bun + Elysia + oRPC + Drizzle + Next.js × 3
 
 ### Monorepo Layout
 

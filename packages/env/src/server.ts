@@ -15,9 +15,13 @@ export const env = createEnv({
     INTERNAL_URL: z.url(),
     EXTERNAL_URL: z.url(),
     ADMIN_URL: z.url(),
-    RESEND_API_KEY: z.string().min(1),
-    RESEND_FROM_EMAIL: z.email(),
-    RESEND_TEST_EMAIL: z.email().optional(),
+    SMTP_HOST: z.string().min(1),
+    SMTP_PORT: z.coerce.number().int().default(587),
+    SMTP_SECURE: z.coerce.boolean().default(false),
+    SMTP_USER: z.string().min(1),
+    SMTP_PASS: z.string().min(1),
+    SMTP_FROM: z.string().min(1),
+    SMTP_CC_MAILS: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),

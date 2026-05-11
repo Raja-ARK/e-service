@@ -20,7 +20,6 @@ const requireAuth = o.middleware(async ({ context, next }) => {
       },
       headers: context.headers,
       origin: context.origin,
-      responseCookies: context.responseCookies,
     },
   });
 });

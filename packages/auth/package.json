@@ -18,12 +18,13 @@
     "dotenv": "catalog:",
     "drizzle-orm": "^0.45.2",
     "ejs": "^3.1.10",
-    "resend": "^4.6.0",
+    "nodemailer": "^6.10.1",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@e-service/config": "workspace:*",
     "@types/ejs": "^3.1.5",
+    "@types/nodemailer": "^6.4.17",
     "typescript": "catalog:"
   }
 }

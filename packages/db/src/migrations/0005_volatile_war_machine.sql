@@ -1,0 +1,2 @@
+ALTER TABLE "jwks" ALTER COLUMN "created_at" SET DATA TYPE timestamp (6) with time zone;--> statement-breakpoint
+ALTER TABLE "jwks" ALTER COLUMN "expires_at" SET DATA TYPE timestamp (6) with time zone;

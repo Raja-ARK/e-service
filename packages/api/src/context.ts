@@ -1,7 +1,6 @@
 import type { Session, User } from "@e-service/db/zod-schemas/auth";
-import { env } from "@e-service/env/server";
 import type { Context as ElysiaContext } from "elysia";
-import type { Origin } from "./utils/constant";
+import { ORIGINS } from "./utils/constant";
 
 export type CreateContextOptions = {
   context: ElysiaContext;
@@ -9,21 +8,8 @@ export type CreateContextOptions = {
 
 export const createContext = async ({ context }: CreateContextOptions) => {
   const origin =
-    context.request.headers.get("origin") ||
-    context.request.headers.get("Origin");
-
-  const getOrigin = (origin: string): Origin | undefined => {
-    switch (true) {
-      case origin.startsWith(env.EXTERNAL_URL):
-        return "external";
-      case origin.startsWith(env.INTERNAL_URL):
-        return "internal";
-      case origin.startsWith(env.ADMIN_URL):
-        return "admin";
-      default:
-        return undefined;
-    }
-  };
+    ORIGINS[context.request.headers.get("Host") as keyof typeof ORIGINS] ??
+    undefined;
 
   return {
     session: null as {
@@ -31,14 +17,8 @@ export const createContext = async ({ context }: CreateContextOptions) => {
       session: Session;
     } | null,
     headers: context.request.headers,
-    origin: origin ? getOrigin(origin) : undefined,
-    responseCookies: [] as string[],
+    origin,
   };
 };
 
-export type Context = Awaited<ReturnType<typeof createContext>> & {
-  session: {
-    user: User;
-    session: Session;
-  } | null;
-};
+export type Context = Awaited<ReturnType<typeof createContext>>;
