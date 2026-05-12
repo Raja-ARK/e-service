@@ -11,8 +11,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { user } from "../auth";
-import { categoryEnum } from "../common";
 import { emailTemplate } from "../email";
+import { categoryEnum } from "../shared";
 import {
   formGroupStage,
   formStepStage,

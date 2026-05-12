@@ -1,8 +1,16 @@
+import { categoryEnum } from "@e-service/db/schema/shared";
 import z from "zod";
 
 export const successResponseSchema = z.object({
   success: z.boolean(),
   message: z.string(),
+});
+
+export const categorySchema = z.enum(categoryEnum.enumValues);
+
+export const dateSchema = z.codec(z.iso.date(), z.date(), {
+  decode: (isoString) => new Date(isoString),
+  encode: (date) => date.toISOString(),
 });
 
 export const filterConditionInputSchema = z.union([
@@ -23,13 +31,23 @@ export const filterOperatorSchema = z.enum([
   "in",
   "isNull",
   "isNotNull",
+  "between",
+  "notBetween",
 ]);
 
+/** Bounds for date/time filters (`between` / `notBetween`). ISO date strings decode to `Date`. */
+export const filterDateRangeSchema = z.object({
+  from: dateSchema,
+  to: dateSchema,
+});
+
 export const filterValueSchema = z.union([
+  dateSchema,
+  filterDateRangeSchema,
   z.string(),
   z.number(),
   z.boolean(),
-  z.array(z.union([z.string(), z.number()])),
+  z.array(z.union([z.string(), z.number(), dateSchema])),
 ]);
 
 export const filterConditionSchema = z.object({

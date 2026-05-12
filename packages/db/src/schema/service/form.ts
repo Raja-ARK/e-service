@@ -11,7 +11,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { portalTypeEnum } from "../common";
+import { portalTypeEnum } from "../shared";
 import { service } from "./service";
 import { stage } from "./stage";
 

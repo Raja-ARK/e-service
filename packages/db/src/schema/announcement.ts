@@ -1,5 +1,5 @@
 ﻿import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { categoryEnum } from "./common";
+import { categoryEnum } from "./shared";
 
 export const announcement = pgTable("announcement", {
   id: uuid("id").primaryKey().defaultRandom(),

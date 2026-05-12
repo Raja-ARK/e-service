@@ -4,13 +4,15 @@ import { department } from "@e-service/db/schema/department";
 import { tryCatch } from "@e-service/shared/utils/try-catch";
 import { ORPCError } from "@orpc/server";
 import type { Context } from "../context";
+import { DEPARTMENT_SELECTABLE_COLUMNS } from "../schema/department";
 import type {
   CreateDepartmentInput,
+  DepartmentGetInput,
   DepartmentIdInput,
   ListDepartmentsInput,
   UpdateDepartmentInput,
 } from "../types/department";
-import { buildWhereClause } from "../utils/filter";
+import { buildColumnsMask, buildWhereClause } from "../utils/filter";
 import { isConstrainViolation } from "../utils/pg-error";
 import { buildOrderBy } from "../utils/sort";
 
@@ -27,8 +29,16 @@ export const listDepartments = async ({
 }: {
   input: ListDepartmentsInput;
 }) => {
-  const { page, limit, filter, filterCondition, sort } = input;
-  const offset = (page - 1) * limit;
+  const {
+    page,
+    limit,
+    filter,
+    filterCondition,
+    sort,
+    select,
+    withoutPagination,
+  } = input;
+  const columns = buildColumnsMask(select, DEPARTMENT_SELECTABLE_COLUMNS);
 
   const conditions = filter
     ? [
@@ -45,8 +55,34 @@ export const listDepartments = async ({
         : or(...conditions)
       : undefined;
 
+  if (withoutPagination) {
+    const rows = await db.query.department.findMany({
+      ...(columns ? { columns } : {}),
+      where,
+      orderBy: (d) =>
+        buildOrderBy(d, sort, DEPARTMENT_SORT_FIELDS, {
+          field: "createdAt",
+          direction: "desc",
+        }),
+    });
+    const total = rows.length;
+    return {
+      data: rows,
+      total,
+      totalPages: 1,
+      currentPage: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+      nextPage: null,
+      prevPage: null,
+    };
+  }
+
+  const offset = (page - 1) * limit;
+
   const [rows, [total]] = await Promise.all([
     db.query.department.findMany({
+      ...(columns ? { columns } : {}),
       where,
       orderBy: (d) =>
         buildOrderBy(d, sort, DEPARTMENT_SORT_FIELDS, {
@@ -76,10 +112,14 @@ export const listDepartments = async ({
 export const getDepartment = async ({
   input,
 }: {
-  input: DepartmentIdInput;
+  input: DepartmentGetInput;
 }) => {
+  const { id, select } = input;
+  const columns = buildColumnsMask(select, DEPARTMENT_SELECTABLE_COLUMNS);
+
   const found = await db.query.department.findFirst({
-    where: eq(department.id, input.id),
+    ...(columns ? { columns } : {}),
+    where: eq(department.id, id),
   });
   if (!found)
     throw new ORPCError("NOT_FOUND", { message: "Department not found" });

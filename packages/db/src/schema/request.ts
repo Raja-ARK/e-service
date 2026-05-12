@@ -8,11 +8,11 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
-import { categoryEnum } from "./common";
 import { company } from "./company";
 import { professional } from "./professional";
 import { service } from "./service/service";
 import { action, stage } from "./service/stage";
+import { categoryEnum } from "./shared";
 
 export const request = pgTable(
   "request",

@@ -11,9 +11,9 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { user } from "../auth";
-import { categoryEnum } from "../common";
 import { department } from "../department";
 import { documentTemplate } from "../document";
+import { categoryEnum } from "../shared";
 import { catalog } from "./catalog";
 import { prerequisite } from "./prerequisite";
 import { stage } from "./stage";

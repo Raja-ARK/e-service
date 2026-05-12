@@ -19,7 +19,7 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import { hourFormatEnum, languagesEnum, themeEnum } from "./common";
+import { hourFormatEnum, languagesEnum, themeEnum } from "./shared";
 
 export const userRoleEnum = pgEnum("role", ["external", "internal", "admin"]);
 

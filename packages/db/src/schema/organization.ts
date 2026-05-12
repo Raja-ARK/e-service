@@ -10,7 +10,7 @@
   TIMEZONE,
 } from "@e-service/shared/utils/constant";
 import { pgTable, smallint, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { hourFormatEnum, languagesEnum, themeEnum } from "./common";
+import { hourFormatEnum, languagesEnum, themeEnum } from "./shared";
 
 export const organization = pgTable("organization", {
   id: uuid("id").defaultRandom().primaryKey(),

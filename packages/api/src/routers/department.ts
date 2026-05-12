@@ -23,7 +23,7 @@ const getById = adminProcedure
     summary: "Get Department",
     tags: ["Department"],
   })
-  .input(departmentSchema.departmentIdSchema)
+  .input(departmentSchema.getDepartmentInputSchema)
   .output(departmentSchema.departmentOutputSchema)
   .handler(async ({ input }) => {
     return await departmentServices.getDepartment({ input });
@@ -44,7 +44,7 @@ const create = adminProcedure
 
 const update = adminProcedure
   .route({
-    method: "PATCH",
+    method: "PUT",
     path: "/departments/{id}",
     summary: "Update Department",
     tags: ["Department"],

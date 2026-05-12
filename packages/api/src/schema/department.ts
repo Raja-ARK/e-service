@@ -103,6 +103,33 @@ const nameArSchema = z
   });
 export const departmentSchema = createSelectSchema(department);
 
+/** Full row subset; validates list/get responses when `select` limits columns. */
+export const departmentPartialSchema = departmentSchema.partial();
+
+export const DEPARTMENT_SELECTABLE_COLUMNS = [
+  "id",
+  "name",
+  "nameAr",
+  "isActive",
+  "description",
+  "descriptionAr",
+  "logo",
+  "createdAt",
+  "updatedAt",
+] as const satisfies ReadonlyArray<keyof typeof department.$inferSelect>;
+
+export const departmentColumnSelectSchema = z.object({
+  id: z.boolean().optional(),
+  name: z.boolean().optional(),
+  nameAr: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  description: z.boolean().optional(),
+  descriptionAr: z.boolean().optional(),
+  logo: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
+  updatedAt: z.boolean().optional(),
+});
+
 export const createDepartmentSchema = createInsertSchema(department, {
   name: nameSchema,
   nameAr: nameArSchema,
@@ -133,6 +160,10 @@ export const departmentIdSchema = z.object({
   id: z.string(),
 });
 
+export const getDepartmentInputSchema = departmentIdSchema.extend({
+  select: departmentColumnSelectSchema.optional(),
+});
+
 export const departmentFilterSchema = z.object({
   name: z.union([z.string(), filterConditionSchema]).optional(),
   nameAr: z.union([z.string(), filterConditionSchema]).optional(),
@@ -143,11 +174,15 @@ export const listDepartmentsInputSchema = paginationQuerySchema.extend({
   filter: departmentFilterSchema.optional(),
   filterCondition: filterConditionInputSchema.optional().default("and"),
   sort: departmentSortSchema,
+  select: departmentColumnSelectSchema.optional(),
+  /** When true, returns all matching rows (no limit/offset). Use for dropdowns. */
+  withoutPagination: z.boolean().optional().default(false),
 });
 
-export const listDepartmentsOutputSchema =
-  paginatedResponseSchema(departmentSchema);
+export const listDepartmentsOutputSchema = paginatedResponseSchema(
+  departmentPartialSchema,
+);
 
 export const departmentOutputSchema = z.object({
-  department: departmentSchema,
+  department: departmentPartialSchema,
 });
