@@ -1,7 +1,5 @@
 import { ORPCError } from "@orpc/server";
 
-export { ORPCError };
-
 export const createError = (
   message: string,
   code:

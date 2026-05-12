@@ -57,7 +57,7 @@
     "@e-service/config": "workspace:*",
     "@types/bun": "catalog:",
     "lefthook": "^2.1.6",
-    "turbo": "^2.9.6",
+    "turbo": "^2.9.12",
     "typescript": "catalog:"
   },
   "packageManager": "bun@1.3.13"

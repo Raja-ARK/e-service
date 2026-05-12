@@ -5,8 +5,8 @@ import { service } from "./service";
 
 export const department = pgTable("department", {
   id: uuid("id").defaultRandom().primaryKey(),
-  name: text("name").notNull(),
-  nameAr: text("name_ar").notNull(),
+  name: text("name").unique().notNull(),
+  nameAr: text("name_ar").unique().notNull(),
   isActive: boolean("is_active").notNull().default(true),
   description: text("description"),
   descriptionAr: text("description_ar"),

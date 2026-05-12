@@ -31,7 +31,7 @@ export const signUpInputSchema = createInsertSchema(user, {
     .nullish(),
   email: emailSchema.transform((email) => email.toLowerCase()),
   name: z.string().check(({ issues, value }) => {
-    if (value === null || value === undefined || value === "") {
+    if (value === null || value === undefined || value?.trim() === "") {
       issues.push({
         code: "custom",
         message: "Name is required",

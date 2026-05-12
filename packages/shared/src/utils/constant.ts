@@ -8,4 +8,4 @@ export const HOUR_FORMAT = "12";
 export const THEME = "light";
 export const ITEMS_PER_PAGE = 10;
 export const ARABIC_NAME_REGEX =
-  /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]+$/;
+  /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\s]+$/;

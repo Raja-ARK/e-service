@@ -1,6 +1,6 @@
 import { protectedProcedure, publicProcedure } from "../";
 import * as authSchema from "../schema/auth";
-import { successResponseSchema } from "../schema/common";
+import { successResponseSchema } from "../schema/shared";
 import * as authServices from "../services/auth";
 
 const signIn = publicProcedure
@@ -45,7 +45,7 @@ const sendVerificationEmail = publicProcedure
     return await authServices.sendVerificationEmail({ input, context });
   });
 
-const verifyEmail = protectedProcedure
+const verifyEmail = publicProcedure
   .route({
     method: "POST",
     path: "/verify-email",

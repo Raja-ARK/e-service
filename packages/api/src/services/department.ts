@@ -1,0 +1,170 @@
+import { db } from "@e-service/db";
+import { and, count, eq, or } from "@e-service/db/drizzle/orm";
+import { department } from "@e-service/db/schema/department";
+import { tryCatch } from "@e-service/shared/utils/try-catch";
+import { ORPCError } from "@orpc/server";
+import type { Context } from "../context";
+import type {
+  CreateDepartmentInput,
+  DepartmentIdInput,
+  ListDepartmentsInput,
+  UpdateDepartmentInput,
+} from "../types/department";
+import { buildWhereClause } from "../utils/filter";
+import { isConstrainViolation } from "../utils/pg-error";
+import { buildOrderBy } from "../utils/sort";
+
+const DEPARTMENT_SORT_FIELDS = [
+  "name",
+  "nameAr",
+  "isActive",
+  "createdAt",
+  "updatedAt",
+] as const;
+
+export const listDepartments = async ({
+  input,
+}: {
+  input: ListDepartmentsInput;
+}) => {
+  const { page, limit, filter, filterCondition, sort } = input;
+  const offset = (page - 1) * limit;
+
+  const conditions = filter
+    ? [
+        buildWhereClause(department.name, filter.name),
+        buildWhereClause(department.nameAr, filter.nameAr),
+        buildWhereClause(department.isActive, filter.isActive),
+      ].filter(Boolean)
+    : [];
+
+  const where =
+    conditions.length > 0
+      ? filterCondition === "and"
+        ? and(...conditions)
+        : or(...conditions)
+      : undefined;
+
+  const [rows, [total]] = await Promise.all([
+    db.query.department.findMany({
+      where,
+      orderBy: (d) =>
+        buildOrderBy(d, sort, DEPARTMENT_SORT_FIELDS, {
+          field: "createdAt",
+          direction: "desc",
+        }),
+      limit,
+      offset,
+    }),
+    db.select({ value: count() }).from(department).where(where),
+  ]);
+
+  const totalPages = Math.ceil((total?.value ?? 0) / limit);
+
+  return {
+    data: rows,
+    total: total?.value ?? 0,
+    totalPages,
+    currentPage: page,
+    hasNextPage: page < totalPages,
+    hasPrevPage: page > 1,
+    nextPage: page < totalPages ? page + 1 : null,
+    prevPage: page > 1 ? page - 1 : null,
+  };
+};
+
+export const getDepartment = async ({
+  input,
+}: {
+  input: DepartmentIdInput;
+}) => {
+  const found = await db.query.department.findFirst({
+    where: eq(department.id, input.id),
+  });
+  if (!found)
+    throw new ORPCError("NOT_FOUND", { message: "Department not found" });
+  return { department: found };
+};
+
+export const createDepartment = async ({
+  input,
+  context,
+}: {
+  input: CreateDepartmentInput;
+  context: Context;
+}) => {
+  const { logo, ...data } = input;
+
+  const { data: created, error } = await tryCatch(
+    db
+      .insert(department)
+      .values({
+        ...data,
+        createdByUserId: context.session?.user.id,
+        updatedByUserId: context.session?.user.id,
+      })
+      .returning(),
+  );
+
+  const newDepartment = created?.[0];
+
+  if (error || !newDepartment) {
+    const { isUniqueConstraintViolation } = isConstrainViolation(error);
+    const uniqueHit = !!error && isUniqueConstraintViolation;
+
+    throw new ORPCError(uniqueHit ? "CONFLICT" : "BAD_REQUEST", {
+      message: uniqueHit
+        ? "A department with that name, Arabic name already exists"
+        : (error?.message ?? "Failed to create department"),
+    });
+  }
+
+  return { department: newDepartment };
+};
+
+export const updateDepartment = async ({
+  input,
+  context,
+}: {
+  input: DepartmentIdInput & UpdateDepartmentInput;
+  context: Context;
+}) => {
+  const { id, logo, ...data } = input;
+
+  const { data: updated, error } = await tryCatch(
+    db
+      .update(department)
+      .set({ ...data, updatedByUserId: context.session?.user.id })
+      .where(eq(department.id, id))
+      .returning(),
+  );
+
+  const updatedDepartment = updated?.[0];
+
+  if (error || !updatedDepartment) {
+    const { isUniqueConstraintViolation } = isConstrainViolation(error);
+    const uniqueHit = !!error && isUniqueConstraintViolation;
+
+    throw new ORPCError(uniqueHit ? "CONFLICT" : "BAD_REQUEST", {
+      message: uniqueHit
+        ? "A department with that name, Arabic name already exists"
+        : (error?.message ?? "Failed to update department"),
+    });
+  }
+
+  return { department: updatedDepartment };
+};
+
+export const deleteDepartment = async ({
+  input,
+}: {
+  input: DepartmentIdInput;
+}) => {
+  const [deleted] = await db
+    .delete(department)
+    .where(eq(department.id, input.id))
+    .returning();
+  if (!deleted)
+    throw new ORPCError("NOT_FOUND", { message: "Department not found" });
+  return { success: true, message: "Department deleted" };
+};

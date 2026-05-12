@@ -10,6 +10,7 @@
     },
     "./drizzle-orm": "./src/drizzle/orm.ts",
     "./drizzle-zod": "./src/drizzle/zod.ts",
+    "./drizzle-core": "./src/drizzle/core.ts",
     "./zod-schemas/*": "./src/zod-schemas/*.ts"
   },
   "scripts": {

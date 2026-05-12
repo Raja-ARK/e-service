@@ -1,0 +1,153 @@
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "@e-service/db/drizzle-zod";
+import { department } from "@e-service/db/schema/department";
+import { ARABIC_NAME_REGEX } from "@e-service/shared/utils/constant";
+import { z } from "zod";
+import {
+  filterConditionInputSchema,
+  filterConditionSchema,
+  paginatedResponseSchema,
+  paginationQuerySchema,
+  sortDirectionSchema,
+} from "./shared";
+
+const departmentSortFieldSchema = z.enum([
+  "name",
+  "nameAr",
+  "isActive",
+  "createdAt",
+  "updatedAt",
+]);
+
+export const departmentSortSchema = z
+  .array(
+    z.object({
+      field: departmentSortFieldSchema,
+      direction: sortDirectionSchema,
+    }),
+  )
+  .max(5)
+  .optional();
+
+const nameSchema = z.string().check(({ issues, value }) => {
+  if (value === null || value === undefined || value?.trim() === "") {
+    issues.push({
+      code: "custom",
+      message: "Name is required",
+      input: value,
+    });
+    return;
+  }
+
+  if (value.length < 2) {
+    issues.push({
+      code: "custom",
+      message: "Name must be at least 2 characters long",
+      input: value,
+    });
+    return;
+  }
+
+  if (value.length > 250) {
+    issues.push({
+      code: "custom",
+      message: "Name must be less than 250 characters long",
+      input: value,
+    });
+    return;
+  }
+});
+
+const nameArSchema = z
+  .string({
+    error: ({ code }) => {
+      if (code === "invalid_type") {
+        return {
+          message: "Arabic name is required",
+        };
+      }
+    },
+  })
+  .trim()
+  .trim()
+  .nonempty("Arabic name is required")
+  .check(({ issues, value }) => {
+    if (value && value?.trim() !== "" && !ARABIC_NAME_REGEX.test(value)) {
+      issues.push({
+        code: "custom",
+        message: "Invalid Arabic name",
+        input: value,
+      });
+      return;
+    }
+
+    if (value.length < 2) {
+      issues.push({
+        code: "custom",
+        message: "Arabic name must be at least 2 characters long",
+        input: value,
+      });
+      return;
+    }
+    if (value.length > 250) {
+      issues.push({
+        code: "custom",
+        message: "Arabic name must be less than 250 characters long",
+        input: value,
+      });
+      return;
+    }
+  });
+export const departmentSchema = createSelectSchema(department);
+
+export const createDepartmentSchema = createInsertSchema(department, {
+  name: nameSchema,
+  nameAr: nameArSchema,
+  description: z.string().optional(),
+  descriptionAr: z.string().optional(),
+  logo: z.file().mime("image/svg+xml").optional(),
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  createdByUserId: true,
+  updatedByUserId: true,
+});
+
+export const updateDepartmentSchema = createUpdateSchema(department, {
+  name: nameSchema.optional(),
+  nameAr: nameArSchema.optional(),
+  logo: z.file().mime("image/svg+xml").optional(),
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  createdByUserId: true,
+  updatedByUserId: true,
+});
+
+export const departmentIdSchema = z.object({
+  id: z.string(),
+});
+
+export const departmentFilterSchema = z.object({
+  name: z.union([z.string(), filterConditionSchema]).optional(),
+  nameAr: z.union([z.string(), filterConditionSchema]).optional(),
+  isActive: z.union([z.boolean(), filterConditionSchema]).optional(),
+});
+
+export const listDepartmentsInputSchema = paginationQuerySchema.extend({
+  filter: departmentFilterSchema.optional(),
+  filterCondition: filterConditionInputSchema.optional().default("and"),
+  sort: departmentSortSchema,
+});
+
+export const listDepartmentsOutputSchema =
+  paginatedResponseSchema(departmentSchema);
+
+export const departmentOutputSchema = z.object({
+  department: departmentSchema,
+});
