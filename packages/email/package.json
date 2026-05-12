@@ -1,0 +1,21 @@
+{
+  "name": "@e-service/email",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@e-service/env": "workspace:*",
+    "nodemailer": "^6.10.1"
+  },
+  "devDependencies": {
+    "@e-service/config": "workspace:*",
+    "@types/nodemailer": "^6.4.17",
+    "typescript": "catalog:"
+  }
+}

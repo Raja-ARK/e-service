@@ -8,6 +8,9 @@
     },
     "./types": "./src/types.ts"
   },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
   "devDependencies": {
     "@e-service/config": "workspace:*",
     "typescript": "catalog:"

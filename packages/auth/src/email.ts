@@ -1,9 +1,9 @@
 import { db } from "@e-service/db";
 import { user } from "@e-service/db/schema/auth";
 import { emailTemplate } from "@e-service/db/schema/email";
+import { sendMail } from "@e-service/email";
 import { eq } from "drizzle-orm";
 import ejs from "ejs";
-import { sendMail } from "./mailer";
 
 type EmailType = "sign-up" | "forget-password" | "email-verification";
 

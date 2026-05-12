@@ -174,19 +174,18 @@
       "name": "@e-service/auth",
       "dependencies": {
         "@e-service/db": "workspace:*",
+        "@e-service/email": "workspace:*",
         "@e-service/env": "workspace:*",
         "@e-service/shared": "workspace:*",
         "better-auth": "catalog:",
         "dotenv": "catalog:",
         "drizzle-orm": "^0.45.2",
         "ejs": "^3.1.10",
-        "nodemailer": "^6.10.1",
         "zod": "catalog:",
       },
       "devDependencies": {
         "@e-service/config": "workspace:*",
         "@types/ejs": "^3.1.5",
-        "@types/nodemailer": "^6.4.17",
         "typescript": "catalog:",
       },
     },
@@ -209,6 +208,18 @@
         "@e-service/config": "workspace:*",
         "@types/pg": "^8.20.0",
         "drizzle-kit": "^0.31.10",
+        "typescript": "catalog:",
+      },
+    },
+    "packages/email": {
+      "name": "@e-service/email",
+      "dependencies": {
+        "@e-service/env": "workspace:*",
+        "nodemailer": "^6.10.1",
+      },
+      "devDependencies": {
+        "@e-service/config": "workspace:*",
+        "@types/nodemailer": "^6.4.17",
         "typescript": "catalog:",
       },
     },
@@ -362,6 +373,8 @@
     "@e-service/config": ["@e-service/config@workspace:packages/config"],
 
     "@e-service/db": ["@e-service/db@workspace:packages/db"],
+
+    "@e-service/email": ["@e-service/email@workspace:packages/email"],
 
     "@e-service/env": ["@e-service/env@workspace:packages/env"],
 

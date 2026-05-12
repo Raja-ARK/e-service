@@ -15,6 +15,9 @@
     "./messages/load": "./src/messages/load.ts",
     "./types": "./src/types.ts"
   },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
   "dependencies": {
     "next-intl": "^4.10.1"
   },
