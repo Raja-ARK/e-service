@@ -1,10 +1,10 @@
 import {
   boolean,
+  foreignKey,
   index,
   integer,
   jsonb,
   pgTable,
-  primaryKey,
   text,
   unique,
   uuid,
@@ -18,6 +18,8 @@ export const lookupOptions = pgTable(
     code: text("code").notNull(),
     label: text("label").notNull(),
     labelAr: text("label_ar").notNull(),
+    parentType: text("parent_type"),
+    parentCode: text("parent_code"),
     order: integer("order").default(0),
     isActive: boolean("is_active").default(true),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
@@ -26,27 +28,11 @@ export const lookupOptions = pgTable(
     unique("lookup_options_type_code_unique").on(table.type, table.code),
     index("lookup_options_type_idx").on(table.type),
     index("lookup_options_type_code_idx").on(table.type, table.code),
-  ],
-);
-
-// Parent→child lookup dependency mapping (e.g. country→state, state→city)
-export const lookupDependencies = pgTable(
-  "lookup_dependencies",
-  {
-    parentType: text("parent_type").notNull(), // e.g. 'country'
-    parentCode: text("parent_code").notNull(), // e.g. 'US'
-    childType: text("child_type").notNull(), // e.g. 'state'
-    childCode: text("child_code").notNull(), // e.g. 'CA'
-  },
-  (table) => [
-    primaryKey({
-      columns: [
-        table.parentType,
-        table.parentCode,
-        table.childType,
-        table.childCode,
-      ],
+    index("lookup_options_parent_idx").on(table.parentType, table.parentCode),
+    foreignKey({
+      name: "lookup_options_parent_fk",
+      columns: [table.parentType, table.parentCode],
+      foreignColumns: [table.type, table.code],
     }),
-    index("lookup_dep_parent_idx").on(table.parentType, table.parentCode),
   ],
 );

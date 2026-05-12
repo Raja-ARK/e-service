@@ -33,7 +33,7 @@ export const seedGender = async () => {
       code: gender.code,
       label: gender.label,
       labelAr: gender.labelAr,
-      sortOrder: index,
+      order: index,
       isActive: true,
       metadata: {},
     }));

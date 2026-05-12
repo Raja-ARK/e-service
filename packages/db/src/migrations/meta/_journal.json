@@ -15,6 +15,13 @@
       "when": 1778588117906,
       "tag": "0001_ambitious_argent",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778595324740,
+      "tag": "0002_flawless_tarantula",
+      "breakpoints": true
     }
   ]
 }

@@ -64,7 +64,7 @@ export const seedCountry = async () => {
     code: c.code,
     label: c.label,
     labelAr: c.labelAr,
-    sortOrder: i,
+    order: i,
     isActive: true,
     metadata: {},
   }));

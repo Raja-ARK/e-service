@@ -1,5 +1,5 @@
 import { db } from "../..";
-import { lookupDependencies, lookupOptions } from "../../schema";
+import { lookupOptions } from "../../schema";
 
 const EMIRATES = [
   {
@@ -45,23 +45,14 @@ export const seedEmirate = async () => {
     code: c.code,
     label: c.label,
     labelAr: c.labelAr,
-    sortOrder: i,
+    parentType: "country",
+    parentCode: "AE",
+    order: i,
     isActive: true,
     metadata: {},
   }));
 
   await db.insert(lookupOptions).values(emirateRows);
-
-  //Create dependencies (UAE country -> Emirates)
-  const dependenciesToInsert = EMIRATES.map((emirate) => ({
-    parentType: "country",
-    parentCode: "AE", // UAE
-    childType: "emirate",
-    childCode: emirate.code,
-    isActive: true,
-  }));
-
-  await db.insert(lookupDependencies).values(dependenciesToInsert);
 
   console.log("Lookup countries seeded successfully!");
 };
