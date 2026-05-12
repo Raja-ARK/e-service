@@ -15,11 +15,15 @@ import {
   index,
   pgEnum,
   pgTable,
-  smallint,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import { hourFormatEnum, languagesEnum, themeEnum } from "./shared";
+import {
+  hourFormatEnum,
+  itemsPerPageEnum,
+  languagesEnum,
+  themeEnum,
+} from "./shared";
 
 export const userRoleEnum = pgEnum("role", ["external", "internal", "admin"]);
 
@@ -44,7 +48,7 @@ export const user = pgTable("user", {
   language: languagesEnum("language").default(LANGUAGE),
   dateFormat: text("date_format").default(DATE_FORMAT),
   dateTimeFormat: text("date_time_format").default(DATE_TIME_FORMAT),
-  itemsPerPage: smallint("items_per_page").default(ITEMS_PER_PAGE),
+  itemsPerPage: itemsPerPageEnum("items_per_page").default(ITEMS_PER_PAGE),
   timeFormat: text("time_format").default(TIME_FORMAT),
   hourFormat: hourFormatEnum("hour_format").default(HOUR_FORMAT),
   defaultTheme: themeEnum("theme").default(THEME),

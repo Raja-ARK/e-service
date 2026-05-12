@@ -4,6 +4,7 @@ import { seedCountry } from "./lookup/country";
 import { seedEmirate } from "./lookup/emirate";
 import { seedGender } from "./lookup/gender";
 import { seedMenus } from "./menu";
+import { seedOrganization } from "./organization";
 
 const runSeeds = async () => {
   try {
@@ -13,6 +14,7 @@ const runSeeds = async () => {
     await seedEmirate();
     await seedGender();
     await seedEmailTemplates();
+    await seedOrganization();
     console.log("All seeds completed successfully!");
     process.exit(0);
   } catch (error) {

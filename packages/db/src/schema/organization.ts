@@ -9,8 +9,13 @@
   TIME_FORMAT,
   TIMEZONE,
 } from "@e-service/shared/utils/constant";
-import { pgTable, smallint, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { hourFormatEnum, languagesEnum, themeEnum } from "./shared";
+import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  hourFormatEnum,
+  itemsPerPageEnum,
+  languagesEnum,
+  themeEnum,
+} from "./shared";
 
 export const organization = pgTable("organization", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -25,7 +30,9 @@ export const organization = pgTable("organization", {
   timeFormat: text("time_format").notNull().default(TIME_FORMAT),
   hourFormat: hourFormatEnum("hour_format").notNull().default(HOUR_FORMAT),
   defaultTheme: themeEnum("theme").notNull().default(THEME),
-  itemsPerPage: smallint("items_per_page").notNull().default(ITEMS_PER_PAGE),
+  itemsPerPage: itemsPerPageEnum("items_per_page")
+    .notNull()
+    .default(ITEMS_PER_PAGE),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

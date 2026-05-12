@@ -1,4 +1,10 @@
-import { categoryEnum } from "@e-service/db/schema/shared";
+import { genderEnum, userRoleEnum } from "@e-service/db/schema/auth";
+import {
+  categoryEnum,
+  hourFormatEnum,
+  languagesEnum,
+  themeEnum,
+} from "@e-service/db/schema/shared";
 import z from "zod";
 
 export const successResponseSchema = z.object({
@@ -7,6 +13,16 @@ export const successResponseSchema = z.object({
 });
 
 export const categorySchema = z.enum(categoryEnum.enumValues);
+
+export const userRoleSchema = z.enum(userRoleEnum.enumValues);
+
+export const genderSchema = z.enum(genderEnum.enumValues);
+
+export const languagesSchema = z.enum(languagesEnum.enumValues);
+
+export const hourFormatSchema = z.enum(hourFormatEnum.enumValues);
+
+export const themeSchema = z.enum(themeEnum.enumValues);
 
 export const dateSchema = z.codec(z.iso.date(), z.date(), {
   decode: (isoString) => new Date(isoString),

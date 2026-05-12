@@ -4,7 +4,10 @@ import { announcement } from "@e-service/db/schema/announcement";
 import { tryCatch } from "@e-service/shared/utils/try-catch";
 import { ORPCError } from "@orpc/server";
 import type { Context } from "../context";
-import { ANNOUNCEMENT_SELECTABLE_COLUMNS } from "../schema/announcement";
+import {
+  ANNOUNCEMENT_SELECTABLE_COLUMNS,
+  ANNOUNCEMENT_SORT_FIELDS,
+} from "../schema/announcement";
 import type {
   AnnouncementGetInput,
   AnnouncementIdInput,
@@ -71,19 +74,6 @@ function buildCategoryWhereClause(
       return undefined;
   }
 }
-
-const ANNOUNCEMENT_SORT_FIELDS = [
-  "title",
-  "titleAr",
-  "description",
-  "descriptionAr",
-  "issueDate",
-  "effectiveFrom",
-  "effectiveTo",
-  "category",
-  "createdAt",
-  "updatedAt",
-] as const;
 
 export const listAnnouncements = async ({
   input,

@@ -16,7 +16,7 @@ import {
   sortDirectionSchema,
 } from "./shared";
 
-const announcementSortFieldSchema = z.enum([
+export const ANNOUNCEMENT_SORT_FIELDS = [
   "title",
   "titleAr",
   "description",
@@ -27,7 +27,9 @@ const announcementSortFieldSchema = z.enum([
   "category",
   "createdAt",
   "updatedAt",
-]);
+] as const satisfies ReadonlyArray<keyof typeof announcement.$inferSelect>;
+
+const announcementSortFieldSchema = z.enum(ANNOUNCEMENT_SORT_FIELDS);
 
 export const announcementSortSchema = z
   .array(

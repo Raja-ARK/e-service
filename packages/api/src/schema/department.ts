@@ -14,13 +14,15 @@ import {
   sortDirectionSchema,
 } from "./shared";
 
-const departmentSortFieldSchema = z.enum([
+export const DEPARTMENT_SORT_FIELDS = [
   "name",
   "nameAr",
   "isActive",
   "createdAt",
   "updatedAt",
-]);
+] as const satisfies ReadonlyArray<keyof typeof department.$inferSelect>;
+
+const departmentSortFieldSchema = z.enum(DEPARTMENT_SORT_FIELDS);
 
 export const departmentSortSchema = z
   .array(
@@ -101,6 +103,7 @@ const nameArSchema = z
       return;
     }
   });
+
 export const departmentSchema = createSelectSchema(department);
 
 /** Full row subset; validates list/get responses when `select` limits columns. */

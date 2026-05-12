@@ -9,14 +9,16 @@ import {
   sortDirectionSchema,
 } from "./shared";
 
-const companySortFieldSchema = z.enum([
+export const COMPANY_SORT_FIELDS = [
   "name",
   "nameAr",
   "status",
   "statusAr",
   "createdAt",
   "updatedAt",
-]);
+] as const satisfies ReadonlyArray<keyof typeof company.$inferSelect>;
+
+const companySortFieldSchema = z.enum(COMPANY_SORT_FIELDS);
 
 export const companySortSchema = z
   .array(

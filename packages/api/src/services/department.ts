@@ -4,7 +4,10 @@ import { department } from "@e-service/db/schema/department";
 import { tryCatch } from "@e-service/shared/utils/try-catch";
 import { ORPCError } from "@orpc/server";
 import type { Context } from "../context";
-import { DEPARTMENT_SELECTABLE_COLUMNS } from "../schema/department";
+import {
+  DEPARTMENT_SELECTABLE_COLUMNS,
+  DEPARTMENT_SORT_FIELDS,
+} from "../schema/department";
 import type {
   CreateDepartmentInput,
   DepartmentGetInput,
@@ -15,14 +18,6 @@ import type {
 import { buildColumnsMask, buildWhereClause } from "../utils/filter";
 import { isConstrainViolation } from "../utils/pg-error";
 import { buildOrderBy } from "../utils/sort";
-
-const DEPARTMENT_SORT_FIELDS = [
-  "name",
-  "nameAr",
-  "isActive",
-  "createdAt",
-  "updatedAt",
-] as const;
 
 export const listDepartments = async ({
   input,

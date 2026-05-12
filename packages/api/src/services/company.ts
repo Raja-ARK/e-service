@@ -10,19 +10,13 @@ import {
 import { company, companyUser } from "@e-service/db/schema/company";
 import { ORPCError } from "@orpc/server";
 import type { Context } from "../context";
-import { COMPANY_SELECTABLE_COLUMNS } from "../schema/company";
+import {
+  COMPANY_SELECTABLE_COLUMNS,
+  COMPANY_SORT_FIELDS,
+} from "../schema/company";
 import type { CompanyGetInput, ListCompaniesInput } from "../types/company";
 import { buildColumnsMask, buildWhereClause } from "../utils/filter";
 import { buildOrderBy } from "../utils/sort";
-
-const COMPANY_SORT_FIELDS = [
-  "name",
-  "nameAr",
-  "status",
-  "statusAr",
-  "createdAt",
-  "updatedAt",
-] as const;
 
 function userLinkedToCompanyExists(userId: string): SQL {
   return exists(

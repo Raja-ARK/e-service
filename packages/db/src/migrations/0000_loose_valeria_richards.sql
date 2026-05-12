@@ -1,11 +1,7 @@
 CREATE TYPE "public"."gender" AS ENUM('male', 'female', 'other');--> statement-breakpoint
+CREATE TYPE "public"."items_per_page" AS ENUM('10', '20', '30', '40', '50');--> statement-breakpoint
 CREATE TYPE "public"."role" AS ENUM('external', 'internal', 'admin');--> statement-breakpoint
-CREATE TYPE "public"."category" AS ENUM('professional', 'corporate');--> statement-breakpoint
-CREATE TYPE "public"."hour_format" AS ENUM('12', '24');--> statement-breakpoint
-CREATE TYPE "public"."languages" AS ENUM('english', 'arabic');--> statement-breakpoint
-CREATE TYPE "public"."portal_type" AS ENUM('external', 'internal');--> statement-breakpoint
-CREATE TYPE "public"."theme" AS ENUM('light', 'dark');--> statement-breakpoint
-CREATE TYPE "public"."email_template_type" AS ENUM('service');--> statement-breakpoint
+CREATE TYPE "public"."email_template_type" AS ENUM('sign-up', 'service', 'forget-password', 'email-verification');--> statement-breakpoint
 CREATE TYPE "public"."menu_type" AS ENUM('internal', 'external', 'admin');--> statement-breakpoint
 CREATE TYPE "public"."field_type" AS ENUM('text', 'number', 'date', 'textarea', 'select', 'radio', 'checkbox', 'file', 'time', 'switch', 'slider', 'rating', 'avatar');--> statement-breakpoint
 CREATE TYPE "public"."form_template_type" AS ENUM('normal', 'table', 'multiple', 'list');--> statement-breakpoint
@@ -16,6 +12,11 @@ CREATE TYPE "public"."eligible_by" AS ENUM('always', 'status-wise');--> statemen
 CREATE TYPE "public"."stage_action_type_external" AS ENUM('submit', 'payment', 'certificate', 'intermediate-submission');--> statement-breakpoint
 CREATE TYPE "public"."stage_action_type_internal" AS ENUM('approve', 'reject', 'send-back', 'schedule-inspection', 'complete-inspection');--> statement-breakpoint
 CREATE TYPE "public"."stage_action_variant" AS ENUM('primary', 'secondary', 'success', 'danger', 'warning', 'info');--> statement-breakpoint
+CREATE TYPE "public"."category" AS ENUM('professional', 'corporate');--> statement-breakpoint
+CREATE TYPE "public"."hour_format" AS ENUM('12', '24');--> statement-breakpoint
+CREATE TYPE "public"."languages" AS ENUM('english', 'arabic');--> statement-breakpoint
+CREATE TYPE "public"."portal_type" AS ENUM('external', 'internal');--> statement-breakpoint
+CREATE TYPE "public"."theme" AS ENUM('light', 'dark');--> statement-breakpoint
 CREATE TABLE "announcement" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"title" text NOT NULL,
@@ -23,12 +24,87 @@ CREATE TABLE "announcement" (
 	"description" text,
 	"description_ar" text,
 	"attachment" text,
-	"issue_date" timestamp NOT NULL,
-	"effective_from" timestamp NOT NULL,
-	"effective_to" timestamp,
+	"issue_date" timestamp with time zone NOT NULL,
+	"effective_from" timestamp with time zone NOT NULL,
+	"effective_to" timestamp with time zone,
 	"category" "category"[] DEFAULT '{"corporate","professional"}' NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "account" (
+	"id" text PRIMARY KEY NOT NULL,
+	"account_id" text NOT NULL,
+	"provider_id" text NOT NULL,
+	"user_id" text NOT NULL,
+	"access_token" text,
+	"refresh_token" text,
+	"id_token" text,
+	"access_token_expires_at" timestamp with time zone,
+	"refresh_token_expires_at" timestamp with time zone,
+	"scope" text,
+	"password" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "jwks" (
+	"id" text PRIMARY KEY NOT NULL,
+	"public_key" text NOT NULL,
+	"private_key" text NOT NULL,
+	"created_at" timestamp (6) with time zone NOT NULL,
+	"expires_at" timestamp (6) with time zone
+);
+--> statement-breakpoint
+CREATE TABLE "session" (
+	"id" text PRIMARY KEY NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"token" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL,
+	"ip_address" text,
+	"user_agent" text,
+	"user_id" text NOT NULL,
+	CONSTRAINT "session_token_unique" UNIQUE("token")
+);
+--> statement-breakpoint
+CREATE TABLE "user" (
+	"id" text PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"name_ar" text,
+	"email" text NOT NULL,
+	"email_verified" boolean DEFAULT false NOT NULL,
+	"image" text,
+	"role" "role" DEFAULT 'external' NOT NULL,
+	"banned" boolean DEFAULT false,
+	"ban_reason" text,
+	"ban_expires" timestamp with time zone,
+	"gender" "gender",
+	"mobile" text,
+	"nationality" text,
+	"emirate_id" text,
+	"dob" timestamp with time zone,
+	"language" "languages" DEFAULT 'english',
+	"date_format" text DEFAULT 'DD MMM YYYY',
+	"date_time_format" text DEFAULT 'DD MMM, YYYY hh:mm a',
+	"items_per_page" "items_per_page" DEFAULT '10',
+	"time_format" text DEFAULT 'hh:mm a',
+	"hour_format" "hour_format" DEFAULT '12',
+	"theme" "theme" DEFAULT 'light',
+	"timezone" text DEFAULT 'Asia/Dubai',
+	"currency" text DEFAULT 'USD',
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "user_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
+CREATE TABLE "verification" (
+	"id" text PRIMARY KEY NOT NULL,
+	"identifier" text NOT NULL,
+	"value" text NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "company" (
@@ -38,8 +114,8 @@ CREATE TABLE "company" (
 	"status" text,
 	"status_ar" text,
 	"metadata" jsonb DEFAULT '{}'::jsonb,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "company_user" (
@@ -57,8 +133,10 @@ CREATE TABLE "department" (
 	"logo" text,
 	"created_by_user_id" text,
 	"updated_by_user_id" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "department_name_unique" UNIQUE("name"),
+	CONSTRAINT "department_name_ar_unique" UNIQUE("name_ar")
 );
 --> statement-breakpoint
 CREATE TABLE "document_template" (
@@ -67,21 +145,20 @@ CREATE TABLE "document_template" (
 	"name_ar" text,
 	"html" text NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "document_template_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
 CREATE TABLE "email_template" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
-	"name_ar" text,
 	"subject" text NOT NULL,
 	"html" text NOT NULL,
 	"type" "email_template_type" NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "email_template_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
@@ -117,8 +194,8 @@ CREATE TABLE "menu" (
 	"disabled" boolean DEFAULT false NOT NULL,
 	"order" integer DEFAULT 0 NOT NULL,
 	"type" "menu_type" DEFAULT 'internal' NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "organization" (
@@ -134,9 +211,9 @@ CREATE TABLE "organization" (
 	"time_format" text DEFAULT 'hh:mm a' NOT NULL,
 	"hour_format" "hour_format" DEFAULT '12' NOT NULL,
 	"theme" "theme" DEFAULT 'light' NOT NULL,
-	"items_per_page" smallint DEFAULT 10 NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"items_per_page" smallint DEFAULT '10' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "professional" (
@@ -145,8 +222,8 @@ CREATE TABLE "professional" (
 	"metadata" jsonb DEFAULT '{}'::jsonb,
 	"status" text,
 	"status_ar" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "request" (
@@ -155,7 +232,7 @@ CREATE TABLE "request" (
 	"service_request_no" text NOT NULL,
 	"status" text NOT NULL,
 	"status_ar" text NOT NULL,
-	"submission_date" timestamp DEFAULT now() NOT NULL,
+	"submission_date" timestamp with time zone DEFAULT now() NOT NULL,
 	"requested_user_id" text NOT NULL,
 	"category" "category" NOT NULL,
 	"current_stage_id" uuid,
@@ -163,11 +240,11 @@ CREATE TABLE "request" (
 	"professional_id" uuid,
 	"payment_status" text,
 	"payment_status_ar" text,
-	"completed_at" timestamp,
-	"cancelled_at" timestamp,
+	"completed_at" timestamp with time zone,
+	"cancelled_at" timestamp with time zone,
 	"form_data" jsonb,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "request_service_request_no_unique" UNIQUE("service_request_no")
 );
 --> statement-breakpoint
@@ -180,7 +257,7 @@ CREATE TABLE "request_history" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"request_id" uuid NOT NULL,
 	"stage_id" uuid NOT NULL,
-	"stage_completed_at" timestamp,
+	"stage_completed_at" timestamp with time zone,
 	"action_id" uuid,
 	"performed_by_user_id" text NOT NULL,
 	"comments" text,
@@ -188,8 +265,8 @@ CREATE TABLE "request_history" (
 	"status_ar" text,
 	"payment_status" text,
 	"payment_status_ar" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "catalog" (
@@ -197,8 +274,8 @@ CREATE TABLE "catalog" (
 	"heading" text NOT NULL,
 	"heading_ar" text NOT NULL,
 	"logo" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"service_id" uuid NOT NULL
 );
 --> statement-breakpoint
@@ -209,8 +286,8 @@ CREATE TABLE "catalog_point" (
 	"order" smallint DEFAULT 0 NOT NULL,
 	"catalog_id" uuid,
 	"sub_catalog_id" uuid,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "catalog_sub_catalog" (
@@ -219,16 +296,16 @@ CREATE TABLE "catalog_sub_catalog" (
 	"heading_ar" text NOT NULL,
 	"order" smallint DEFAULT 0 NOT NULL,
 	"catalog_id" uuid NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "form" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"service_id" uuid NOT NULL,
 	"type" "form_type" DEFAULT 'step' NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "form_service_id_unique" UNIQUE("service_id")
 );
 --> statement-breakpoint
@@ -249,8 +326,8 @@ CREATE TABLE "form_field" (
 	"hide_for" "portal_type",
 	"config" jsonb DEFAULT '{"required":false,"disabled":false,"minLength":null,"maxLength":null,"min":null,"max":null,"defaultValue":null,"allowedFileTypes":["image/jpeg","image/png","image/gif","image/webp"],"maxFileSize":10485760,"maxFileCount":1,"fieldWidth":"full","fieldAlignment":"left","description":null,"descriptionAr":null,"prefixIcon":null,"suffixIcon":null,"pattern":null,"patternMessage":null,"patternMessageAr":null,"multiple":null}'::jsonb,
 	"can_edit_in_internal" boolean DEFAULT true NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "form_field_stage" (
@@ -270,8 +347,8 @@ CREATE TABLE "form_group" (
 	"icon" text,
 	"template_type" "form_template_type" DEFAULT 'normal' NOT NULL,
 	"visibility_condition" jsonb,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "form_group_stage" (
@@ -291,8 +368,8 @@ CREATE TABLE "form_rule" (
 	"actions" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"order" smallint DEFAULT 0 NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "form_step" (
@@ -308,8 +385,8 @@ CREATE TABLE "form_step" (
 	"type" "step_type" DEFAULT 'normal' NOT NULL,
 	"template_type" "form_template_type" DEFAULT 'normal' NOT NULL,
 	"visibility_condition" jsonb,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "form_step_stage" (
@@ -323,8 +400,8 @@ CREATE TABLE "prerequisite" (
 	"text" text NOT NULL,
 	"text_ar" text NOT NULL,
 	"service_id" uuid NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "service" (
@@ -349,8 +426,8 @@ CREATE TABLE "service" (
 	"completion_script" jsonb DEFAULT '[]'::jsonb,
 	"created_by_user_id" text,
 	"updated_by_user_id" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "action" (
@@ -373,8 +450,8 @@ CREATE TABLE "action" (
 	"email_template_id" uuid,
 	"created_by_user_id" text,
 	"updated_by_user_id" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "stage" (
@@ -386,28 +463,12 @@ CREATE TABLE "stage" (
 	"service_id" uuid NOT NULL,
 	"created_by_user_id" text,
 	"updated_by_user_id" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "role" "role" DEFAULT 'external' NOT NULL;--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "banned" boolean DEFAULT false;--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "ban_reason" text;--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "ban_expires" timestamp;--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "gender" "gender";--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "mobile" text;--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "nationality" text;--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "emirate_id" text;--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "dob" timestamp;--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "language" "languages" DEFAULT 'english';--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "date_format" text DEFAULT 'DD MMM YYYY';--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "date_time_format" text DEFAULT 'DD MMM, YYYY hh:mm a';--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "items_per_page" smallint DEFAULT 10;--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "time_format" text DEFAULT 'hh:mm a';--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "hour_format" "hour_format" DEFAULT '12';--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "theme" "theme" DEFAULT 'light';--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "timezone" text DEFAULT 'Asia/Dubai';--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "currency" text DEFAULT 'USD';--> statement-breakpoint
+ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "company_user" ADD CONSTRAINT "company_user_company_id_company_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."company"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "company_user" ADD CONSTRAINT "company_user_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "department" ADD CONSTRAINT "department_created_by_user_id_user_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -455,6 +516,9 @@ ALTER TABLE "action" ADD CONSTRAINT "action_updated_by_user_id_user_id_fk" FOREI
 ALTER TABLE "stage" ADD CONSTRAINT "stage_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stage" ADD CONSTRAINT "stage_created_by_user_id_user_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stage" ADD CONSTRAINT "stage_updated_by_user_id_user_id_fk" FOREIGN KEY ("updated_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");--> statement-breakpoint
 CREATE INDEX "document_template_name_idx" ON "document_template" USING btree ("name");--> statement-breakpoint
 CREATE INDEX "email_template_type_idx" ON "email_template" USING btree ("type");--> statement-breakpoint
 CREATE INDEX "lookup_dep_parent_idx" ON "lookup_dependencies" USING btree ("parent_type","parent_code");--> statement-breakpoint

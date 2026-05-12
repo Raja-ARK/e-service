@@ -1,0 +1,2 @@
+ALTER TABLE "organization" ALTER COLUMN "items_per_page" SET DEFAULT '10'::"public"."items_per_page";--> statement-breakpoint
+ALTER TABLE "organization" ALTER COLUMN "items_per_page" SET DATA TYPE "public"."items_per_page" USING "items_per_page"::"public"."items_per_page";
