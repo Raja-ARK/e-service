@@ -22,7 +22,7 @@ export const emailTemplate = pgTable(
     name: text("name").notNull().unique(),
     subject: text("subject").notNull(),
     html: text("html").notNull(),
-    type: emailTemplateTypeEnum("type").notNull(),
+    type: emailTemplateTypeEnum("type").notNull().default("service"),
     isActive: boolean("is_active").default(true).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()

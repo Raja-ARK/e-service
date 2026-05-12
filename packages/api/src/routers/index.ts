@@ -4,6 +4,8 @@ import { announcementRouter } from "./announcement";
 import { authRouter } from "./auth";
 import { companyRouter } from "./company";
 import { departmentRouter } from "./department";
+import { documentRouter } from "./document";
+import { emailRouter } from "./email";
 import { userRouter } from "./user";
 
 export const appRouter = {
@@ -11,6 +13,8 @@ export const appRouter = {
   announcement: announcementRouter,
   company: companyRouter,
   department: departmentRouter,
+  document: documentRouter,
+  email: emailRouter,
   user: userRouter,
 };
 export type AppRouter = typeof appRouter;
