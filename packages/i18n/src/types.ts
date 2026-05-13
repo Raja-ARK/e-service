@@ -3,7 +3,7 @@ import type { routing } from "./routing";
 
 declare module "next-intl" {
   interface AppConfig {
-    Locale: routing["locales"][number];
-    Messages: en;
+    Locale: (typeof routing)["locales"][number];
+    Messages: typeof en;
   }
 }

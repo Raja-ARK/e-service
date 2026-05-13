@@ -32,7 +32,7 @@ export const service = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     name: text("name").notNull(),
     nameAr: text("name_ar").notNull(),
-    logo: text("logo").notNull(),
+    logo: text("logo"),
     description: text("description").notNull(),
     descriptionAr: text("description_ar").notNull(),
     isActive: boolean("is_active").notNull().default(true),

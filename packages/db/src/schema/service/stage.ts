@@ -33,33 +33,34 @@ export type ActionAssignment =
 
 // All side-effects applied to the request when an action fires
 export type ActionOutcome = {
-  requestStatus?: BilingualValue; // new request status after action
-  paymentStatus?: BilingualValue; // new payment status after action (if applicable)
-  assignment?: ActionAssignment; // who gets assigned; omit = no change to assignee
+  requestStatus?: BilingualValue | null; // new request status after action
+  paymentStatus?: BilingualValue | null; // new payment status after action (if applicable)
+  assignment?: ActionAssignment | null; // who gets assigned; omit = no change to assignee
 };
 
 // Condition controlling when a stageAction is visible to the user
 export type ActionCondition = {
   statuses?: string[]; // show only when request.status is in this list
   roles?: ("external" | "internal")[]; // show only for these user categories
-  operator?: "AND" | "OR"; // how to combine statuses + roles (default AND)
+  operator?: "AND" | "OR" | null; // how to combine statuses + roles (default AND)
 };
 
 // A stage to skip when the action fires, with an optional trigger condition and outcome override
 export type SkipStage = {
   stageId: string; // target stage to skip
-  condition?: VisibilityCondition; // only skip when this condition is true
-  outcome?: ActionOutcome; // status update to apply when THIS skip path fires (overrides action default outcome)
+  condition?: VisibilityCondition | null; // only skip when this condition is true
+  outcome?: ActionOutcome | null; // status update to apply when THIS skip path fires (overrides action default outcome)
 };
 
 // Button style applied to the action in the UI
 export const stageActionVariantEnum = pgEnum("stage_action_variant", [
   "primary",
   "secondary",
-  "success",
-  "danger",
   "warning",
-  "info",
+  "warning-outline",
+  "outline",
+  "ghost",
+  "link",
 ]);
 
 // Action types available to external (citizen) users
@@ -127,11 +128,13 @@ export const action = pgTable(
     icon: text("icon"),
     modalIcon: text("modal_icon"),
     disabled: boolean("disabled").notNull().default(false),
-    showCondition: jsonb("show_condition").$type<ActionCondition>(), // visibility rule based on request status / user role
-    completeStageIds: text("complete_stage_ids").array().notNull().default([]), // stages to mark complete when action fires
-    removeStageIds: text("remove_stage_ids").array().notNull().default([]), // stages to remove from request when action fires
-    skipStages: jsonb("skip_stages").$type<SkipStage[]>().notNull().default([]), // conditional stage skips; each entry carries its own outcome override
-    outcome: jsonb("outcome").$type<ActionOutcome>(), // default status update applied on normal completion (overridden per skip entry)
+    showCondition: jsonb("show_condition")
+      .$type<ActionCondition | null>()
+      .default(null), // visibility rule based on request status / user role
+    completeStageIds: text("complete_stage_ids").array().default([]), // stages to mark complete when action fires
+    removeStageIds: text("remove_stage_ids").array().default([]), // stages to remove from request when action fires
+    skipStages: jsonb("skip_stages").$type<SkipStage[]>().default([]), // conditional stage skips; each entry carries its own outcome override
+    outcome: jsonb("outcome").$type<ActionOutcome | null>().default(null), // default status update applied on normal completion (overridden per skip entry)
     emailTemplateId: uuid("email_template_id").references(
       () => emailTemplate.id,
     ), // notification email sent to assignee/applicant when this action fires

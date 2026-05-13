@@ -219,7 +219,9 @@ export const updateDepartment = async ({
       .update(department)
       .set({
         ...data,
-        ...(newKey !== undefined && { logo: newKey }),
+        ...((newKey !== undefined || logo === null) && {
+          logo: logo ? newKey : null,
+        }),
         updatedBy: context?.session?.user.id,
       })
       .where(eq(department.id, id))
@@ -243,7 +245,7 @@ export const updateDepartment = async ({
   }
 
   // Best-effort: delete old logo after successful DB update
-  if ((newKey || newKey === null) && existingKey) {
+  if ((newKey || logo === null) && existingKey) {
     await deleteFile(existingKey).catch(() => {});
   }
 

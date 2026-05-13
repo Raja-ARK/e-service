@@ -1,4 +1,4 @@
-import { adminProcedure, protectedProcedure } from "../";
+import { adminProcedure, protectedProcedure, publicProcedure } from "../";
 import { successResponseSchema } from "../schema/shared";
 import * as userSchema from "../schema/user";
 import * as userServices from "../services/user";
@@ -6,11 +6,10 @@ import * as userServices from "../services/user";
 const list = adminProcedure
   .route({
     method: "GET",
-    path: "/users",
+    path: "/list",
     summary: "List users",
     description:
       "Paginated list of all users. Only administrators can call this endpoint.",
-    tags: ["User"],
   })
   .input(userSchema.listUsersInputSchema)
   .output(userSchema.listUsersOutputSchema)
@@ -21,11 +20,10 @@ const list = adminProcedure
 const getUser = protectedProcedure
   .route({
     method: "GET",
-    path: "/user",
+    path: "/",
     summary: "Get user",
     description:
       "Returns the authenticated user’s record. External and internal users only ever see themselves. Administrators should use GET /users to list or inspect other accounts.",
-    tags: ["User"],
   })
   .input(userSchema.getUsersInputSchema)
   .output(userSchema.getUsersOutputSchema)
@@ -36,9 +34,9 @@ const getUser = protectedProcedure
 const create = adminProcedure
   .route({
     method: "POST",
-    path: "/user",
+    path: "/",
     summary: "Create user",
-    tags: ["User"],
+    description: "Create a new user",
   })
   .input(userSchema.createUserInputSchema)
   .output(userSchema.createUserOutputSchema)
@@ -49,9 +47,9 @@ const create = adminProcedure
 const remove = adminProcedure
   .route({
     method: "DELETE",
-    path: "/user/{id}",
+    path: "/{id}",
     summary: "Remove user",
-    tags: ["User"],
+    description: "Remove a user by id",
   })
   .input(userSchema.removeUserInputSchema)
   .output(successResponseSchema)
@@ -62,11 +60,10 @@ const remove = adminProcedure
 const update = protectedProcedure
   .route({
     method: "PUT",
-    path: "/user",
+    path: "/{id}",
     summary: "Update user",
     description:
       "Updates the current user’s profile (no role or ban fields). Administrators may include `id` to update another user, including role and ban fields.",
-    tags: ["User"],
   })
   .input(userSchema.updateUserInputSchema)
   .output(successResponseSchema)
@@ -74,10 +71,10 @@ const update = protectedProcedure
     return await userServices.updateUser({ input, context });
   });
 
-export const userRouter = {
+export const userRouter = publicProcedure.tag("User").prefix("/users").router({
   list,
   getUser,
   create,
   remove,
   update,
-};
+});

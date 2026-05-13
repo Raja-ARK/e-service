@@ -310,7 +310,7 @@ export const updateUser = async ({
           userId: input.id,
           data: {
             ...patch,
-            image: newImageKey ?? null,
+            image: image === null ? null : (newImageKey ?? null),
           },
         },
         headers: context.headers,
@@ -334,7 +334,7 @@ export const updateUser = async ({
 
   const { data: updated, error } = await tryCatch(
     auth.api.updateUser({
-      body: { ...patch, image: newImageKey ?? null },
+      body: { ...patch, image: image === null ? null : (newImageKey ?? null) },
       headers: context.headers,
     }),
   );
@@ -351,7 +351,7 @@ export const updateUser = async ({
     });
   }
 
-  if ((newImageKey || newImageKey === null) && oldImageKey)
+  if ((newImageKey || image === null) && oldImageKey)
     await deleteFile(oldImageKey).catch((err) => {
       console.log(err);
     });

@@ -1,4 +1,4 @@
-import { adminProcedure } from "../";
+import { adminProcedure, publicProcedure } from "../";
 import * as departmentSchema from "../schema/department";
 import { successResponseSchema } from "../schema/shared";
 import * as departmentServices from "../services/department";
@@ -6,9 +6,9 @@ import * as departmentServices from "../services/department";
 const list = adminProcedure
   .route({
     method: "GET",
-    path: "/departments",
+    path: "/",
     summary: "List Departments",
-    tags: ["Department"],
+    description: "List all departments",
   })
   .input(departmentSchema.listDepartmentsInputSchema)
   .output(departmentSchema.listDepartmentsOutputSchema)
@@ -19,9 +19,9 @@ const list = adminProcedure
 const getById = adminProcedure
   .route({
     method: "GET",
-    path: "/departments/{id}",
+    path: "/{id}",
     summary: "Get Department",
-    tags: ["Department"],
+    description: "Get a department by id",
   })
   .input(departmentSchema.getDepartmentInputSchema)
   .output(departmentSchema.departmentOutputSchema)
@@ -32,9 +32,9 @@ const getById = adminProcedure
 const create = adminProcedure
   .route({
     method: "POST",
-    path: "/departments",
+    path: "/",
     summary: "Create Department",
-    tags: ["Department"],
+    description: "Create a new department",
   })
   .input(departmentSchema.createDepartmentSchema)
   .output(departmentSchema.departmentOutputSchema)
@@ -45,9 +45,9 @@ const create = adminProcedure
 const update = adminProcedure
   .route({
     method: "PUT",
-    path: "/departments/{id}",
+    path: "/{id}",
     summary: "Update Department",
-    tags: ["Department"],
+    description: "Update a department by id",
   })
   .input(
     departmentSchema.departmentIdSchema.merge(
@@ -62,9 +62,9 @@ const update = adminProcedure
 const remove = adminProcedure
   .route({
     method: "DELETE",
-    path: "/departments/{id}",
+    path: "/{id}",
     summary: "Delete Department",
-    tags: ["Department"],
+    description: "Delete a department by id",
   })
   .input(departmentSchema.departmentIdSchema)
   .output(successResponseSchema)
@@ -72,10 +72,13 @@ const remove = adminProcedure
     return await departmentServices.deleteDepartment({ input });
   });
 
-export const departmentRouter = {
-  list,
-  getById,
-  create,
-  update,
-  remove,
-};
+export const departmentRouter = publicProcedure
+  .tag("Department")
+  .prefix("/departments")
+  .router({
+    list,
+    getById,
+    create,
+    update,
+    remove,
+  });

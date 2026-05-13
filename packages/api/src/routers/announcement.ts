@@ -1,4 +1,4 @@
-import { adminProcedure, protectedProcedure } from "../";
+import { adminProcedure, protectedProcedure, publicProcedure } from "../";
 import * as announcementSchema from "../schema/announcement";
 import { successResponseSchema } from "../schema/shared";
 import * as announcementServices from "../services/announcement";
@@ -6,9 +6,9 @@ import * as announcementServices from "../services/announcement";
 const list = protectedProcedure
   .route({
     method: "GET",
-    path: "/announcements",
+    path: "/",
     summary: "List Announcements",
-    tags: ["Announcement"],
+    description: "List all announcements",
   })
   .input(announcementSchema.listAnnouncementsInputSchema)
   .output(announcementSchema.listAnnouncementsOutputSchema)
@@ -19,9 +19,9 @@ const list = protectedProcedure
 const getById = protectedProcedure
   .route({
     method: "GET",
-    path: "/announcements/{id}",
+    path: "/{id}",
     summary: "Get Announcement",
-    tags: ["Announcement"],
+    description: "Get an announcement by id",
   })
   .input(announcementSchema.getAnnouncementInputSchema)
   .output(announcementSchema.announcementOutputSchema)
@@ -32,9 +32,9 @@ const getById = protectedProcedure
 const create = adminProcedure
   .route({
     method: "POST",
-    path: "/announcements",
+    path: "/",
     summary: "Create Announcement",
-    tags: ["Announcement"],
+    description: "Create a new announcement",
   })
   .input(announcementSchema.createAnnouncementSchema)
   .output(announcementSchema.announcementOutputSchema)
@@ -45,9 +45,9 @@ const create = adminProcedure
 const update = adminProcedure
   .route({
     method: "PUT",
-    path: "/announcements/{id}",
+    path: "/{id}",
     summary: "Update Announcement",
-    tags: ["Announcement"],
+    description: "Update an announcement by id",
   })
   .input(announcementSchema.updateAnnouncementSchema)
   .output(announcementSchema.announcementOutputSchema)
@@ -58,9 +58,9 @@ const update = adminProcedure
 const remove = adminProcedure
   .route({
     method: "DELETE",
-    path: "/announcements/{id}",
+    path: "/{id}",
     summary: "Delete Announcement",
-    tags: ["Announcement"],
+    description: "Delete an announcement by id",
   })
   .input(announcementSchema.announcementIdSchema)
   .output(successResponseSchema)
@@ -68,10 +68,13 @@ const remove = adminProcedure
     return await announcementServices.deleteAnnouncement({ input });
   });
 
-export const announcementRouter = {
-  list,
-  getById,
-  create,
-  update,
-  remove,
-};
+export const announcementRouter = publicProcedure
+  .tag("Announcement")
+  .prefix("/announcements")
+  .router({
+    list,
+    getById,
+    create,
+    update,
+    remove,
+  });

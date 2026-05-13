@@ -4,7 +4,10 @@ import {
   createUpdateSchema,
 } from "@e-service/db/drizzle-zod";
 import { department } from "@e-service/db/schema/department";
-import { ARABIC_NAME_REGEX } from "@e-service/shared/utils/constant";
+import {
+  ARABIC_NAME_REGEX,
+  IMAGE_MIME_TYPES,
+} from "@e-service/shared/utils/constant";
 import { z } from "zod";
 import {
   filterConditionInputSchema,
@@ -134,7 +137,7 @@ export const createDepartmentSchema = createInsertSchema(department, {
   nameAr: nameArSchema,
   description: z.string().optional(),
   descriptionAr: z.string().optional(),
-  logo: z.file().mime("image/svg+xml").optional(),
+  logo: z.file().mime(IMAGE_MIME_TYPES).optional().nullable(),
 }).omit({
   id: true,
   createdAt: true,
@@ -146,7 +149,7 @@ export const createDepartmentSchema = createInsertSchema(department, {
 export const updateDepartmentSchema = createUpdateSchema(department, {
   name: nameSchema.optional(),
   nameAr: nameArSchema.optional(),
-  logo: z.file().mime("image/svg+xml").optional(),
+  logo: z.file().mime(IMAGE_MIME_TYPES).optional().nullable(),
 }).omit({
   id: true,
   createdAt: true,

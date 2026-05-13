@@ -9,6 +9,7 @@ import { emailRouter } from "./email";
 import { fileRouter } from "./file";
 import { lookupRouter } from "./lookup";
 import { requestRouter } from "./request";
+import { serviceRootRouter } from "./service";
 import { userRouter } from "./user";
 
 export const appRouter = {
@@ -22,6 +23,7 @@ export const appRouter = {
   lookup: lookupRouter,
   user: userRouter,
   request: requestRouter,
+  service: serviceRootRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

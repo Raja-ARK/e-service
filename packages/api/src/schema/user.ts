@@ -5,7 +5,10 @@ import {
 } from "@e-service/db/drizzle-zod";
 import { user } from "@e-service/db/schema/auth";
 import { emailSchema, passwordSchema } from "@e-service/shared/schema";
-import { ARABIC_NAME_REGEX } from "@e-service/shared/utils/constant";
+import {
+  ARABIC_NAME_REGEX,
+  IMAGE_MIME_TYPES,
+} from "@e-service/shared/utils/constant";
 import { z } from "zod";
 import {
   dateSchema,
@@ -234,21 +237,22 @@ export const userIdSchema = z.object({
 
 export const removeUserInputSchema = userIdSchema;
 
-export const updateUserInputSchema = userIdSchema
-  .partial()
-  .extend(
-    createUpdateSchema(user, {
-      name: nameSchema.optional(),
-      nameAr: nameArSchema.optional(),
-      image: z.file().mime("image/*").nullable().optional(),
-    }).omit({
-      id: true,
-      email: true,
-      emailVerified: true,
-      createdAt: true,
-      updatedAt: true,
-    }).shape,
-  )
+export const updateUserInputSchema = createUpdateSchema(user, {
+  id: z
+    .string()
+    .trim()
+    .nonempty("User id is required")
+    .nonoptional("User id is required"),
+  name: nameSchema.optional(),
+  nameAr: nameArSchema.optional(),
+  image: z.file().mime(IMAGE_MIME_TYPES).nullable().optional(),
+})
+  .omit({
+    email: true,
+    emailVerified: true,
+    createdAt: true,
+    updatedAt: true,
+  })
   .check(({ issues, value }) => {
     const hasId = value.id !== undefined && value.id !== "";
     const keys = Object.keys(value).filter((k) => k !== "id");

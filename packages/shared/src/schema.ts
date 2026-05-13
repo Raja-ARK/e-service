@@ -45,12 +45,28 @@ export const passwordSchema = z.string().check(({ issues, value }) => {
 export const serviceCompletionStatusSchema = z.union([
   z.object({
     status: z
-      .string()
+      .string({
+        error: ({ code }) => {
+          if (code === "invalid_type") {
+            return {
+              message: "Status is required",
+            };
+          }
+        },
+      })
       .trim()
       .nonempty("Status is required")
       .nonoptional("Status is required"),
     statusAr: z
-      .string()
+      .string({
+        error: ({ code }) => {
+          if (code === "invalid_type") {
+            return {
+              message: "Arabic status is required",
+            };
+          }
+        },
+      })
       .trim()
       .nonempty("Arabic status is required")
       .nonoptional("Arabic status is required"),
@@ -58,17 +74,41 @@ export const serviceCompletionStatusSchema = z.union([
   z.array(
     z.object({
       eligibleStatus: z
-        .string()
+        .string({
+          error: ({ code }) => {
+            if (code === "invalid_type") {
+              return {
+                message: "Eligible status is required",
+              };
+            }
+          },
+        })
         .trim()
         .nonempty("Eligible status is required")
         .nonoptional("Eligible status is required"),
       status: z
-        .string()
+        .string({
+          error: ({ code }) => {
+            if (code === "invalid_type") {
+              return {
+                message: "Status is required",
+              };
+            }
+          },
+        })
         .trim()
         .nonempty("Status is required")
         .nonoptional("Status is required"),
       statusAr: z
-        .string()
+        .string({
+          error: ({ code }) => {
+            if (code === "invalid_type") {
+              return {
+                message: "Arabic status is required",
+              };
+            }
+          },
+        })
         .trim()
         .nonempty("Arabic status is required")
         .nonoptional("Arabic status is required"),

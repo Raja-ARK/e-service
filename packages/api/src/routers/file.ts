@@ -5,9 +5,9 @@ import * as fileServices from "../services/file";
 const list = adminProcedure
   .route({
     method: "GET",
-    path: "/files",
+    path: "/",
     summary: "List Files",
-    tags: ["File"],
+    description: "List all files",
   })
   .input(fileSchema.listFilesInputSchema)
   .output(fileSchema.listFilesOutputSchema)
@@ -18,9 +18,9 @@ const list = adminProcedure
 const getFile = publicProcedure
   .route({
     method: "GET",
-    path: "/file/{+key}",
-    summary: "Get File by Key",
-    tags: ["File"],
+    path: "/{+key}",
+    summary: "Get File",
+    description: "Get a file by key",
   })
   .input(fileSchema.getFileInputSchema)
   .output(fileSchema.getFileOutputSchema)
@@ -28,7 +28,7 @@ const getFile = publicProcedure
     return await fileServices.getFile({ input });
   });
 
-export const fileRouter = {
+export const fileRouter = publicProcedure.tag("File").prefix("/files").router({
   list,
   getFile,
-};
+});

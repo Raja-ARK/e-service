@@ -9,3 +9,11 @@ export const THEME = "light";
 export const ITEMS_PER_PAGE = "10";
 export const ARABIC_NAME_REGEX =
   /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\s]+$/;
+export const IMAGE_MIME_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+];

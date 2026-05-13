@@ -15,7 +15,7 @@ export const catalog = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     heading: text("heading").notNull(),
     headingAr: text("heading_ar").notNull(),
-    logo: text("logo").notNull(),
+    logo: text("logo"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

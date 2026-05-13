@@ -1,4 +1,4 @@
-import { adminProcedure } from "../";
+import { adminProcedure, publicProcedure } from "../";
 import * as emailSchema from "../schema/email";
 import { successResponseSchema } from "../schema/shared";
 import * as emailServices from "../services/email";
@@ -6,9 +6,9 @@ import * as emailServices from "../services/email";
 const list = adminProcedure
   .route({
     method: "GET",
-    path: "/email-templates",
+    path: "/",
     summary: "List email templates",
-    tags: ["EmailTemplate"],
+    description: "List all email templates",
   })
   .input(emailSchema.listEmailTemplatesInputSchema)
   .output(emailSchema.listEmailTemplatesOutputSchema)
@@ -19,9 +19,9 @@ const list = adminProcedure
 const getById = adminProcedure
   .route({
     method: "GET",
-    path: "/email-templates/{id}",
+    path: "/{id}",
     summary: "Get email template",
-    tags: ["EmailTemplate"],
+    description: "Get an email template by id",
   })
   .input(emailSchema.getEmailTemplateInputSchema)
   .output(emailSchema.emailTemplateOutputSchema)
@@ -32,9 +32,9 @@ const getById = adminProcedure
 const create = adminProcedure
   .route({
     method: "POST",
-    path: "/email-templates",
+    path: "/",
     summary: "Create email template",
-    tags: ["EmailTemplate"],
+    description: "Create a new email template",
   })
   .input(emailSchema.createEmailTemplateSchema)
   .output(emailSchema.emailTemplateOutputSchema)
@@ -45,9 +45,9 @@ const create = adminProcedure
 const update = adminProcedure
   .route({
     method: "PUT",
-    path: "/email-templates/{id}",
+    path: "/{id}",
     summary: "Update email template",
-    tags: ["EmailTemplate"],
+    description: "Update an email template by id",
   })
   .input(
     emailSchema.emailTemplateIdSchema.merge(
@@ -62,9 +62,9 @@ const update = adminProcedure
 const remove = adminProcedure
   .route({
     method: "DELETE",
-    path: "/email-templates/{id}",
+    path: "/{id}",
     summary: "Delete email template",
-    tags: ["EmailTemplate"],
+    description: "Delete an email template by id",
   })
   .input(emailSchema.emailTemplateIdSchema)
   .output(successResponseSchema)
@@ -72,10 +72,13 @@ const remove = adminProcedure
     return await emailServices.deleteEmailTemplate({ input });
   });
 
-export const emailRouter = {
-  list,
-  getById,
-  create,
-  update,
-  remove,
-};
+export const emailRouter = publicProcedure
+  .tag("Email Template")
+  .prefix("/email-templates")
+  .router({
+    list,
+    getById,
+    create,
+    update,
+    remove,
+  });

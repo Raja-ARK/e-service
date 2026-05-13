@@ -1,13 +1,13 @@
-import { protectedProcedure } from "../";
+import { protectedProcedure, publicProcedure } from "../";
 import * as companySchema from "../schema/company";
 import * as companyServices from "../services/company";
 
 const list = protectedProcedure
   .route({
     method: "GET",
-    path: "/companies",
+    path: "/",
     summary: "List Companies",
-    tags: ["Company"],
+    description: "List all companies",
   })
   .input(companySchema.listCompaniesInputSchema)
   .output(companySchema.listCompaniesOutputSchema)
@@ -18,9 +18,9 @@ const list = protectedProcedure
 const getById = protectedProcedure
   .route({
     method: "GET",
-    path: "/companies/{id}",
+    path: "/{id}",
     summary: "Get Company",
-    tags: ["Company"],
+    description: "Get a company by id",
   })
   .input(companySchema.getCompanyInputSchema)
   .output(companySchema.companyOutputSchema)
@@ -28,7 +28,10 @@ const getById = protectedProcedure
     return await companyServices.getCompany({ input, context });
   });
 
-export const companyRouter = {
-  list,
-  getById,
-};
+export const companyRouter = publicProcedure
+  .tag("Company")
+  .prefix("/companies")
+  .router({
+    list,
+    getById,
+  });

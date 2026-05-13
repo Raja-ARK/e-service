@@ -1,4 +1,4 @@
-import { adminProcedure, protectedProcedure } from "../";
+import { adminProcedure, protectedProcedure, publicProcedure } from "../";
 import * as lookupSchema from "../schema/lookup";
 import { successResponseSchema } from "../schema/shared";
 import * as lookupServices from "../services/lookup";
@@ -6,9 +6,9 @@ import * as lookupServices from "../services/lookup";
 const list = protectedProcedure
   .route({
     method: "GET",
-    path: "/lookup-options",
+    path: "/",
     summary: "List Lookup Options",
-    tags: ["Lookup"],
+    description: "List all lookup options",
   })
   .input(lookupSchema.listLookupOptionsInputSchema)
   .output(lookupSchema.listLookupOptionsOutputSchema)
@@ -19,9 +19,9 @@ const list = protectedProcedure
 const getById = protectedProcedure
   .route({
     method: "GET",
-    path: "/lookup-options/{id}",
+    path: "/{id}",
     summary: "Get Lookup Option",
-    tags: ["Lookup"],
+    description: "Get a lookup option by id",
   })
   .input(lookupSchema.getLookupOptionInputSchema)
   .output(lookupSchema.lookupOptionOutputSchema)
@@ -32,9 +32,9 @@ const getById = protectedProcedure
 const create = adminProcedure
   .route({
     method: "POST",
-    path: "/lookup-options",
+    path: "/",
     summary: "Create Lookup Option",
-    tags: ["Lookup"],
+    description: "Create a new lookup option",
   })
   .input(lookupSchema.createLookupOptionSchema)
   .output(lookupSchema.lookupOptionOutputSchema)
@@ -45,9 +45,9 @@ const create = adminProcedure
 const update = adminProcedure
   .route({
     method: "PUT",
-    path: "/lookup-options/{id}",
+    path: "/{id}",
     summary: "Update Lookup Option",
-    tags: ["Lookup"],
+    description: "Update a lookup option by id",
   })
   .input(
     lookupSchema.lookupIdSchema.merge(lookupSchema.updateLookupOptionSchema),
@@ -60,9 +60,9 @@ const update = adminProcedure
 const remove = adminProcedure
   .route({
     method: "DELETE",
-    path: "/lookup-options/{id}",
+    path: "/{id}",
     summary: "Delete Lookup Option",
-    tags: ["Lookup"],
+    description: "Delete a lookup option by id",
   })
   .input(lookupSchema.lookupIdSchema)
   .output(successResponseSchema)
@@ -73,9 +73,9 @@ const remove = adminProcedure
 const bulkCreate = adminProcedure
   .route({
     method: "POST",
-    path: "/lookup-options/bulk",
+    path: "/bulk",
     summary: "Bulk Create Lookup Options",
-    tags: ["Lookup"],
+    description: "Bulk create lookup options",
   })
   .input(lookupSchema.bulkCreateLookupOptionsSchema)
   .output(lookupSchema.bulkOperationOutputSchema)
@@ -86,9 +86,9 @@ const bulkCreate = adminProcedure
 const bulkUpdate = adminProcedure
   .route({
     method: "PUT",
-    path: "/lookup-options/bulk",
+    path: "/bulk",
     summary: "Bulk Update Lookup Options",
-    tags: ["Lookup"],
+    description: "Bulk update lookup options",
   })
   .input(lookupSchema.bulkUpdateLookupOptionsSchema)
   .output(lookupSchema.bulkOperationOutputSchema)
@@ -99,9 +99,9 @@ const bulkUpdate = adminProcedure
 const bulkDelete = adminProcedure
   .route({
     method: "DELETE",
-    path: "/lookup-options/bulk",
+    path: "/bulk",
     summary: "Bulk Delete Lookup Options",
-    tags: ["Lookup"],
+    description: "Bulk delete lookup options",
   })
   .input(lookupSchema.bulkDeleteLookupOptionsSchema)
   .output(lookupSchema.bulkOperationOutputSchema)
@@ -109,13 +109,16 @@ const bulkDelete = adminProcedure
     return await lookupServices.bulkDeleteLookupOptions({ input });
   });
 
-export const lookupRouter = {
-  list,
-  getById,
-  create,
-  update,
-  remove,
-  bulkCreate,
-  bulkUpdate,
-  bulkDelete,
-};
+export const lookupRouter = publicProcedure
+  .tag("Lookup")
+  .prefix("/lookups")
+  .router({
+    list,
+    getById,
+    create,
+    update,
+    remove,
+    bulkCreate,
+    bulkUpdate,
+    bulkDelete,
+  });

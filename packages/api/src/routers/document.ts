@@ -1,4 +1,4 @@
-import { adminProcedure } from "../";
+import { adminProcedure, publicProcedure } from "../";
 import * as documentSchema from "../schema/document";
 import { successResponseSchema } from "../schema/shared";
 import * as documentServices from "../services/document";
@@ -6,9 +6,9 @@ import * as documentServices from "../services/document";
 const list = adminProcedure
   .route({
     method: "GET",
-    path: "/document-templates",
+    path: "/",
     summary: "List document templates",
-    tags: ["DocumentTemplate"],
+    description: "List all document templates",
   })
   .input(documentSchema.listDocumentTemplatesInputSchema)
   .output(documentSchema.listDocumentTemplatesOutputSchema)
@@ -19,9 +19,9 @@ const list = adminProcedure
 const getById = adminProcedure
   .route({
     method: "GET",
-    path: "/document-templates/{id}",
+    path: "/{id}",
     summary: "Get document template",
-    tags: ["DocumentTemplate"],
+    description: "Get a document template by id",
   })
   .input(documentSchema.getDocumentTemplateInputSchema)
   .output(documentSchema.documentTemplateOutputSchema)
@@ -32,9 +32,9 @@ const getById = adminProcedure
 const create = adminProcedure
   .route({
     method: "POST",
-    path: "/document-templates",
+    path: "/",
     summary: "Create document template",
-    tags: ["DocumentTemplate"],
+    description: "Create a new document template",
   })
   .input(documentSchema.createDocumentTemplateSchema)
   .output(documentSchema.documentTemplateOutputSchema)
@@ -45,9 +45,9 @@ const create = adminProcedure
 const update = adminProcedure
   .route({
     method: "PUT",
-    path: "/document-templates/{id}",
+    path: "/{id}",
     summary: "Update document template",
-    tags: ["DocumentTemplate"],
+    description: "Update a document template by id",
   })
   .input(documentSchema.updateDocumentTemplateSchema)
   .output(documentSchema.documentTemplateOutputSchema)
@@ -58,9 +58,9 @@ const update = adminProcedure
 const remove = adminProcedure
   .route({
     method: "DELETE",
-    path: "/document-templates/{id}",
+    path: "/{id}",
     summary: "Delete document template",
-    tags: ["DocumentTemplate"],
+    description: "Delete a document template by id",
   })
   .input(documentSchema.documentTemplateIdSchema)
   .output(successResponseSchema)
@@ -68,10 +68,13 @@ const remove = adminProcedure
     return await documentServices.deleteDocumentTemplate({ input });
   });
 
-export const documentRouter = {
-  list,
-  getById,
-  create,
-  update,
-  remove,
-};
+export const documentRouter = publicProcedure
+  .tag("Document Template")
+  .prefix("/document-templates")
+  .router({
+    list,
+    getById,
+    create,
+    update,
+    remove,
+  });
