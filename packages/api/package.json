@@ -17,6 +17,7 @@
     "@e-service/db": "workspace:*",
     "@e-service/env": "workspace:*",
     "@e-service/shared": "workspace:*",
+    "@e-service/storage": "workspace:*",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",

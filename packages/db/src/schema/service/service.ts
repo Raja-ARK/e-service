@@ -47,6 +47,7 @@ export const service = pgTable(
     description: text("description").notNull(),
     descriptionAr: text("description_ar").notNull(),
     isActive: boolean("is_active").notNull().default(true),
+    serviceCode: text("service_code").unique().notNull(),
     departmentId: uuid("department_id")
       .notNull()
       .references(() => department.id, { onDelete: "cascade" }),

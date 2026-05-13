@@ -2,6 +2,8 @@ import { db } from "@e-service/db";
 import { and, count, eq, or } from "@e-service/db/drizzle/orm";
 import { department } from "@e-service/db/schema/department";
 import { tryCatch } from "@e-service/shared/utils/try-catch";
+import { deleteFile, uploadFile } from "@e-service/storage";
+import { generateKey } from "@e-service/storage/utils";
 import { ORPCError } from "@orpc/server";
 import type { Context } from "../context";
 import {
@@ -130,11 +132,25 @@ export const createDepartment = async ({
 }) => {
   const { logo, ...data } = input;
 
+  let key = logo ? generateKey(logo, "department") : undefined;
+
+  if (logo && key) {
+    const { data, error } = await tryCatch(
+      uploadFile(key, logo, {
+        contentType: logo.type || undefined,
+        metadata: { originalName: logo.name },
+      }),
+    );
+    key = data?.key ?? undefined;
+    console.log(data, error);
+  }
+
   const { data: created, error } = await tryCatch(
     db
       .insert(department)
       .values({
         ...data,
+        logo: key ?? null,
         createdByUserId: context.session?.user.id,
         updatedByUserId: context.session?.user.id,
       })
@@ -144,6 +160,11 @@ export const createDepartment = async ({
   const newDepartment = created?.[0];
 
   if (error || !newDepartment) {
+    if (key)
+      await deleteFile(key).catch((err) => {
+        console.log(err);
+      });
+
     const { isUniqueConstraintViolation } = isConstrainViolation(error);
     const uniqueHit = !!error && isUniqueConstraintViolation;
 
@@ -166,10 +187,41 @@ export const updateDepartment = async ({
 }) => {
   const { id, logo, ...data } = input;
 
+  let newKey: string | undefined | null;
+  let existingKey: string | undefined | null;
+
+  if (logo) {
+    // Fetch current logo key before update so we can delete it after success
+    const existing = await db.query.department.findFirst({
+      columns: { logo: true },
+      where: eq(department.id, id),
+    });
+
+    existingKey = existing?.logo;
+
+    newKey =
+      logo === null ? null : logo ? generateKey(logo, "department") : undefined;
+
+    if (logo && newKey) {
+      const { data, error } = await tryCatch(
+        uploadFile(newKey, logo, {
+          contentType: logo.type || undefined,
+          metadata: { originalName: logo.name },
+        }),
+      );
+      newKey = data?.key ?? undefined;
+      console.log(data, error);
+    }
+  }
+
   const { data: updated, error } = await tryCatch(
     db
       .update(department)
-      .set({ ...data, updatedByUserId: context.session?.user.id })
+      .set({
+        ...data,
+        ...(newKey !== undefined && { logo: newKey }),
+        updatedByUserId: context.session?.user.id,
+      })
       .where(eq(department.id, id))
       .returning(),
   );
@@ -177,6 +229,9 @@ export const updateDepartment = async ({
   const updatedDepartment = updated?.[0];
 
   if (error || !updatedDepartment) {
+    // Rollback: delete newly uploaded file since DB update failed
+    if (newKey) await deleteFile(newKey).catch(() => {});
+
     const { isUniqueConstraintViolation } = isConstrainViolation(error);
     const uniqueHit = !!error && isUniqueConstraintViolation;
 
@@ -185,6 +240,11 @@ export const updateDepartment = async ({
         ? "A department with that name, Arabic name already exists"
         : (error?.message ?? "Failed to update department"),
     });
+  }
+
+  // Best-effort: delete old logo after successful DB update
+  if ((newKey || newKey === null) && existingKey) {
+    await deleteFile(existingKey).catch(() => {});
   }
 
   return { department: updatedDepartment };
@@ -199,6 +259,11 @@ export const deleteDepartment = async ({
     .delete(department)
     .where(eq(department.id, input.id))
     .returning();
+
+  if (deleted?.logo) {
+    await deleteFile(deleted.logo).catch(() => {});
+  }
+
   if (!deleted)
     throw new ORPCError("NOT_FOUND", { message: "Department not found" });
   return { success: true, message: "Department deleted" };

@@ -240,6 +240,7 @@ export const updateUserInputSchema = userIdSchema
     createUpdateSchema(user, {
       name: nameSchema.optional(),
       nameAr: nameArSchema.optional(),
+      image: z.file().mime("image/*").nullable().optional(),
     }).omit({
       id: true,
       email: true,

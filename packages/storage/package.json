@@ -1,0 +1,24 @@
+{
+  "name": "@e-service/storage",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./utils": "./src/utils.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@e-service/env": "workspace:*",
+    "files-sdk": "latest"
+  },
+  "devDependencies": {
+    "@e-service/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}

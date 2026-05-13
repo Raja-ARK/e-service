@@ -25,6 +25,9 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    // Storage (files-sdk/fs) — required only when using @e-service/storage
+    STORAGE_ROOT: z.string().optional(),
+    STORAGE_PUBLIC_URL: z.string().optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

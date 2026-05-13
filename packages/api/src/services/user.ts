@@ -4,6 +4,8 @@ import { and, count, eq, or } from "@e-service/db/drizzle/orm";
 import { user } from "@e-service/db/schema/auth";
 import type { User } from "@e-service/db/zod-schemas/auth";
 import { tryCatch } from "@e-service/shared/utils/try-catch";
+import { deleteFile, uploadFile } from "@e-service/storage";
+import { generateKey } from "@e-service/storage/utils";
 import { ORPCError } from "@orpc/server";
 import type { Context } from "../context";
 import { USER_SELECTABLE_COLUMNS, USER_SORT_FIELDS } from "../schema/user";
@@ -125,25 +127,25 @@ export const getUsers = async ({
     throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
   }
 
-  const userData = context.session?.user;
+  const userSession = context.session?.user;
 
   const columns = buildColumnsMask(input.select, USER_SELECTABLE_COLUMNS);
 
-  const row = await db.query.user.findFirst({
+  const userData = await db.query.user.findFirst({
     ...(columns ? { columns } : {}),
     where:
-      userData?.role === "admin" && input.id
+      userSession?.role === "admin" && input.id
         ? eq(user.id, input.id)
         : eq(user.id, uid),
   });
 
-  console.log("row", row);
+  console.log("userData", userData);
 
-  if (!row) {
+  if (!userData) {
     throw new ORPCError("NOT_FOUND", { message: "User not found" });
   }
 
-  return { user: row };
+  return { user: userData };
 };
 
 export const createUser = async ({
@@ -246,8 +248,36 @@ export const updateUser = async ({
     });
   }
 
-  const { id: _id, ...rest } = input;
+  const { id: _id, image, ...rest } = input;
   const patch = omitUndefined(rest) as Record<string, unknown>;
+
+  let newImageKey: string | undefined;
+  let oldImageKey: string | undefined;
+
+  if (image) {
+    if (!isSelf) {
+      const existingUser = await db.query.user.findFirst({
+        where: eq(user.id, targetId),
+        columns: { image: true },
+      });
+
+      oldImageKey = existingUser?.image ?? undefined;
+    }
+
+    oldImageKey = sessionUser.image ?? undefined;
+    newImageKey = generateKey(image, "user");
+
+    const { data, error } = await tryCatch(
+      uploadFile(newImageKey, image, {
+        contentType: image.type || undefined,
+        metadata: { originalName: image.name },
+      }),
+    );
+
+    console.log(data, error);
+
+    patch.image = data?.key ?? null;
+  }
 
   if (isSelf) {
     delete patch.role;
@@ -276,24 +306,35 @@ export const updateUser = async ({
   if (isAdmin && !isSelf) {
     const { data, error } = await tryCatch(
       auth.api.adminUpdateUser({
-        body: { userId: input.id, data: patch },
+        body: {
+          userId: input.id,
+          data: {
+            ...patch,
+            image: newImageKey ?? null,
+          },
+        },
         headers: context.headers,
       }),
     );
 
     if (error || !data) {
+      if (newImageKey) await deleteFile(newImageKey).catch(() => {});
       throw new ORPCError("BAD_REQUEST", {
         message:
           error instanceof Error ? error.message : "Failed to update user",
       });
     }
 
+    if (newImageKey && oldImageKey)
+      await deleteFile(oldImageKey).catch((err) => {
+        console.log(err);
+      });
     return { success: true, message: "User updated" };
   }
 
   const { data: updated, error } = await tryCatch(
     auth.api.updateUser({
-      body: { ...patch },
+      body: { ...patch, image: newImageKey ?? null },
       headers: context.headers,
     }),
   );
@@ -301,10 +342,19 @@ export const updateUser = async ({
   const row = updated?.status;
 
   if (error || !row) {
+    if (newImageKey)
+      await deleteFile(newImageKey).catch((err) => {
+        console.log(err);
+      });
     throw new ORPCError("BAD_REQUEST", {
       message: error instanceof Error ? error.message : "Failed to update user",
     });
   }
+
+  if ((newImageKey || newImageKey === null) && oldImageKey)
+    await deleteFile(oldImageKey).catch((err) => {
+      console.log(err);
+    });
 
   return { success: true, message: "User updated" };
 };

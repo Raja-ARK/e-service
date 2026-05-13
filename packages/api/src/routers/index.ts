@@ -6,7 +6,9 @@ import { companyRouter } from "./company";
 import { departmentRouter } from "./department";
 import { documentRouter } from "./document";
 import { emailRouter } from "./email";
+import { fileRouter } from "./file";
 import { lookupRouter } from "./lookup";
+import { requestRouter } from "./request";
 import { userRouter } from "./user";
 
 export const appRouter = {
@@ -16,8 +18,10 @@ export const appRouter = {
   department: departmentRouter,
   document: documentRouter,
   email: emailRouter,
+  file: fileRouter,
   lookup: lookupRouter,
   user: userRouter,
+  request: requestRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;
