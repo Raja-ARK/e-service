@@ -1,4 +1,5 @@
 ﻿import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { user } from "./auth";
 import { categoryEnum } from "./shared";
 
 export const announcement = pgTable("announcement", {
@@ -15,6 +16,8 @@ export const announcement = pgTable("announcement", {
     .array()
     .notNull()
     .default(["corporate", "professional"]),
+  createdBy: text("created_by").references(() => user.id),
+  updatedBy: text("updated_by").references(() => user.id),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

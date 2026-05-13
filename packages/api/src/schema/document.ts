@@ -100,8 +100,6 @@ export const DOCUMENT_TEMPLATE_SELECTABLE_COLUMNS = [
   "nameAr",
   "html",
   "isActive",
-  "createdAt",
-  "updatedAt",
 ] as const satisfies ReadonlyArray<keyof typeof documentTemplate.$inferSelect>;
 
 export const documentTemplateColumnSelectSchema = z.object({
@@ -110,8 +108,6 @@ export const documentTemplateColumnSelectSchema = z.object({
   nameAr: z.boolean().optional(),
   html: z.boolean().optional(),
   isActive: z.boolean().optional(),
-  createdAt: z.boolean().optional(),
-  updatedAt: z.boolean().optional(),
 });
 
 export const createDocumentTemplateSchema = createInsertSchema(
@@ -125,6 +121,8 @@ export const createDocumentTemplateSchema = createInsertSchema(
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const updateDocumentTemplateSchema = createUpdateSchema(
@@ -138,6 +136,8 @@ export const updateDocumentTemplateSchema = createUpdateSchema(
 ).omit({
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const documentTemplateIdSchema = z.object({

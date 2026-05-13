@@ -151,8 +151,8 @@ export const createDepartment = async ({
       .values({
         ...data,
         logo: key ?? null,
-        createdByUserId: context.session?.user.id,
-        updatedByUserId: context.session?.user.id,
+        createdBy: context?.session?.user.id,
+        updatedBy: context?.session?.user.id,
       })
       .returning(),
   );
@@ -220,7 +220,7 @@ export const updateDepartment = async ({
       .set({
         ...data,
         ...(newKey !== undefined && { logo: newKey }),
-        updatedByUserId: context.session?.user.id,
+        updatedBy: context?.session?.user.id,
       })
       .where(eq(department.id, id))
       .returning(),

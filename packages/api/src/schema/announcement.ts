@@ -124,8 +124,6 @@ export const ANNOUNCEMENT_SELECTABLE_COLUMNS = [
   "effectiveFrom",
   "effectiveTo",
   "category",
-  "createdAt",
-  "updatedAt",
 ] as const satisfies ReadonlyArray<keyof typeof announcement.$inferSelect>;
 
 export const announcementColumnSelectSchema = z.object({
@@ -139,8 +137,6 @@ export const announcementColumnSelectSchema = z.object({
   effectiveFrom: z.boolean().optional(),
   effectiveTo: z.boolean().optional(),
   category: z.boolean().optional(),
-  createdAt: z.boolean().optional(),
-  updatedAt: z.boolean().optional(),
 });
 
 export const createAnnouncementSchema = createInsertSchema(announcement, {
@@ -157,6 +153,8 @@ export const createAnnouncementSchema = createInsertSchema(announcement, {
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const updateAnnouncementSchema = createUpdateSchema(announcement, {
@@ -170,6 +168,8 @@ export const updateAnnouncementSchema = createUpdateSchema(announcement, {
 }).omit({
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const announcementIdSchema = z.object({

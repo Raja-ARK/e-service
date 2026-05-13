@@ -38,8 +38,8 @@ const create = adminProcedure
   })
   .input(documentSchema.createDocumentTemplateSchema)
   .output(documentSchema.documentTemplateOutputSchema)
-  .handler(async ({ input }) => {
-    return await documentServices.createDocumentTemplate({ input });
+  .handler(async ({ input, context }) => {
+    return await documentServices.createDocumentTemplate({ input, context });
   });
 
 const update = adminProcedure
@@ -51,8 +51,8 @@ const update = adminProcedure
   })
   .input(documentSchema.updateDocumentTemplateSchema)
   .output(documentSchema.documentTemplateOutputSchema)
-  .handler(async ({ input }) => {
-    return await documentServices.updateDocumentTemplate({ input });
+  .handler(async ({ input, context }) => {
+    return await documentServices.updateDocumentTemplate({ input, context });
   });
 
 const remove = adminProcedure

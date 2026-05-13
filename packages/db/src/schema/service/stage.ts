@@ -92,8 +92,8 @@ export const stage = pgTable(
     serviceId: uuid("service_id")
       .notNull()
       .references(() => service.id, { onDelete: "cascade" }),
-    createdByUserId: text("created_by_user_id").references(() => user.id),
-    updatedByUserId: text("updated_by_user_id").references(() => user.id),
+    createdBy: text("created_by").references(() => user.id),
+    updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -135,8 +135,8 @@ export const action = pgTable(
     emailTemplateId: uuid("email_template_id").references(
       () => emailTemplate.id,
     ), // notification email sent to assignee/applicant when this action fires
-    createdByUserId: text("created_by_user_id").references(() => user.id),
-    updatedByUserId: text("updated_by_user_id").references(() => user.id),
+    createdBy: text("created_by").references(() => user.id),
+    updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

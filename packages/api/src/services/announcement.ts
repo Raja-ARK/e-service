@@ -152,13 +152,20 @@ export const getAnnouncement = async ({
 
 export const createAnnouncement = async ({
   input,
-  context: _context,
+  context,
 }: {
   input: CreateAnnouncementInput;
   context: Context;
 }) => {
   const { data: created, error } = await tryCatch(
-    db.insert(announcement).values(input).returning(),
+    db
+      .insert(announcement)
+      .values({
+        ...input,
+        createdBy: context?.session?.user.id,
+        updatedBy: context?.session?.user.id,
+      })
+      .returning(),
   );
 
   const row = created?.[0];
@@ -179,7 +186,7 @@ export const createAnnouncement = async ({
 
 export const updateAnnouncement = async ({
   input,
-  context: _context,
+  context,
 }: {
   input: AnnouncementIdInput & UpdateAnnouncementInput;
   context: Context;
@@ -189,7 +196,7 @@ export const updateAnnouncement = async ({
   const { data: updated, error } = await tryCatch(
     db
       .update(announcement)
-      .set(data)
+      .set({ ...data, updatedBy: context?.session?.user.id })
       .where(eq(announcement.id, id))
       .returning(),
   );

@@ -38,8 +38,8 @@ const create = adminProcedure
   })
   .input(emailSchema.createEmailTemplateSchema)
   .output(emailSchema.emailTemplateOutputSchema)
-  .handler(async ({ input }) => {
-    return await emailServices.createEmailTemplate({ input });
+  .handler(async ({ input, context }) => {
+    return await emailServices.createEmailTemplate({ input, context });
   });
 
 const update = adminProcedure
@@ -55,8 +55,8 @@ const update = adminProcedure
     ),
   )
   .output(emailSchema.emailTemplateOutputSchema)
-  .handler(async ({ input }) => {
-    return await emailServices.updateEmailTemplate({ input });
+  .handler(async ({ input, context }) => {
+    return await emailServices.updateEmailTemplate({ input, context });
   });
 
 const remove = adminProcedure

@@ -7,6 +7,7 @@
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { user } from "./auth";
 
 export const emailTemplateTypeEnum = pgEnum("email_template_type", [
   "sign-up",
@@ -24,6 +25,8 @@ export const emailTemplate = pgTable(
     html: text("html").notNull(),
     type: emailTemplateTypeEnum("type").notNull().default("service"),
     isActive: boolean("is_active").default(true).notNull(),
+    createdBy: text("created_by").references(() => user.id),
+    updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

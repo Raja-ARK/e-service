@@ -3,6 +3,7 @@ import { and, count, eq, or } from "@e-service/db/drizzle/orm";
 import { documentTemplate } from "@e-service/db/schema/document";
 import { tryCatch } from "@e-service/shared/utils/try-catch";
 import { ORPCError } from "@orpc/server";
+import type { Context } from "../context";
 import {
   DOCUMENT_TEMPLATE_SELECTABLE_COLUMNS,
   DOCUMENT_TEMPLATE_SORT_FIELDS,
@@ -130,11 +131,20 @@ export const getDocumentTemplate = async ({
 
 export const createDocumentTemplate = async ({
   input,
+  context,
 }: {
   input: CreateDocumentTemplateInput;
+  context: Context;
 }) => {
   const { data: created, error } = await tryCatch(
-    db.insert(documentTemplate).values(input).returning(),
+    db
+      .insert(documentTemplate)
+      .values({
+        ...input,
+        createdBy: context?.session?.user.id,
+        updatedBy: context?.session?.user.id,
+      })
+      .returning(),
   );
 
   const row = created?.[0];
@@ -155,15 +165,17 @@ export const createDocumentTemplate = async ({
 
 export const updateDocumentTemplate = async ({
   input,
+  context,
 }: {
   input: UpdateDocumentTemplateInput;
+  context: Context;
 }) => {
   const { id, ...data } = input;
 
   const { data: updated, error } = await tryCatch(
     db
       .update(documentTemplate)
-      .set(data)
+      .set({ ...data, updatedBy: context?.session?.user.id })
       .where(eq(documentTemplate.id, id))
       .returning(),
   );

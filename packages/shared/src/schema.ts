@@ -41,3 +41,37 @@ export const passwordSchema = z.string().check(({ issues, value }) => {
     return;
   }
 });
+
+export const serviceCompletionStatusSchema = z.union([
+  z.object({
+    status: z
+      .string()
+      .trim()
+      .nonempty("Status is required")
+      .nonoptional("Status is required"),
+    statusAr: z
+      .string()
+      .trim()
+      .nonempty("Arabic status is required")
+      .nonoptional("Arabic status is required"),
+  }),
+  z.array(
+    z.object({
+      eligibleStatus: z
+        .string()
+        .trim()
+        .nonempty("Eligible status is required")
+        .nonoptional("Eligible status is required"),
+      status: z
+        .string()
+        .trim()
+        .nonempty("Status is required")
+        .nonoptional("Status is required"),
+      statusAr: z
+        .string()
+        .trim()
+        .nonempty("Arabic status is required")
+        .nonoptional("Arabic status is required"),
+    }),
+  ),
+]);

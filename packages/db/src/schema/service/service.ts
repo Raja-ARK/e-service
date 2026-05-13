@@ -1,4 +1,5 @@
-﻿import { relations } from "drizzle-orm";
+﻿import type { ServiceCompletionStatus } from "@e-service/shared/types";
+import { relations } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -17,18 +18,6 @@ import { categoryEnum } from "../shared";
 import { catalog } from "./catalog";
 import { prerequisite } from "./prerequisite";
 import { stage } from "./stage";
-
-export type CompletionStatus =
-  | {
-      status: string;
-      statusAr: string;
-    }
-  | {
-      eligileStatus: string;
-      status: string;
-      statusAr: string;
-    }[]
-  | null;
 
 export type CompletionScriptType = {
   type: (typeof categoryEnum.enumValues)[number];
@@ -65,14 +54,14 @@ export const service = pgTable(
     eligibleBy: eligibleByEnum("eligible_by").notNull().default("always"),
     eligibleStatus: text("eligible_status").array().default([]),
     completionStatus: jsonb("completion_status")
-      .$type<CompletionStatus>()
+      .$type<ServiceCompletionStatus | null>()
       .default(null),
     registerCompany: boolean("register_company").notNull().default(false),
     completionScript: jsonb("completion_script")
       .$type<CompletionScriptType[]>()
       .default([]),
-    createdByUserId: text("created_by_user_id").references(() => user.id),
-    updatedByUserId: text("updated_by_user_id").references(() => user.id),
+    createdBy: text("created_by").references(() => user.id),
+    updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

@@ -121,7 +121,7 @@ export const getUsers = async ({
   input: GetUsersInput;
   context: Context;
 }) => {
-  const uid = context.session?.user.id;
+  const uid = context?.session?.user.id;
 
   if (!uid) {
     throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
@@ -193,7 +193,7 @@ export const removeUser = async ({
   input: RemoveUserInput;
   context: Context;
 }) => {
-  if (input.id === context.session?.user.id) {
+  if (input.id === context?.session?.user.id) {
     throw new ORPCError("BAD_REQUEST", {
       message: "You cannot remove your own account from this action",
     });
@@ -222,7 +222,7 @@ export const updateUser = async ({
   input: UpdateUserInput;
   context: Context;
 }) => {
-  const sessionUser = context.session?.user;
+  const sessionUser = context?.session?.user;
 
   if (!sessionUser) {
     throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });

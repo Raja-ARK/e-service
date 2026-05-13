@@ -3,6 +3,7 @@ import { and, count, eq, or } from "@e-service/db/drizzle/orm";
 import { emailTemplate } from "@e-service/db/schema/email";
 import { tryCatch } from "@e-service/shared/utils/try-catch";
 import { ORPCError } from "@orpc/server";
+import type { Context } from "../context";
 import {
   EMAIL_TEMPLATE_SELECTABLE_COLUMNS,
   EMAIL_TEMPLATE_SORT_FIELDS,
@@ -125,11 +126,20 @@ export const getEmailTemplate = async ({
 
 export const createEmailTemplate = async ({
   input,
+  context,
 }: {
   input: CreateEmailTemplateInput;
+  context: Context;
 }) => {
   const { data: created, error } = await tryCatch(
-    db.insert(emailTemplate).values(input).returning(),
+    db
+      .insert(emailTemplate)
+      .values({
+        ...input,
+        createdBy: context?.session?.user.id,
+        updatedBy: context?.session?.user.id,
+      })
+      .returning(),
   );
 
   const row = created?.[0];
@@ -150,15 +160,17 @@ export const createEmailTemplate = async ({
 
 export const updateEmailTemplate = async ({
   input,
+  context,
 }: {
-  input: EmailTemplateIdInput & UpdateEmailTemplateInput;
+  input: UpdateEmailTemplateInput;
+  context: Context;
 }) => {
   const { id, ...data } = input;
 
   const { data: updated, error } = await tryCatch(
     db
       .update(emailTemplate)
-      .set(data)
+      .set({ ...data, updatedBy: context?.session?.user.id })
       .where(eq(emailTemplate.id, id))
       .returning(),
   );

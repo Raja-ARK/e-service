@@ -6,6 +6,7 @@
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { user } from "./auth";
 
 export const documentTemplate = pgTable(
   "document_template",
@@ -15,6 +16,8 @@ export const documentTemplate = pgTable(
     nameAr: text("name_ar"),
     html: text("html").notNull(),
     isActive: boolean("is_active").default(true).notNull(),
+    createdBy: text("created_by").references(() => user.id),
+    updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

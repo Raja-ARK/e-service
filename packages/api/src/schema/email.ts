@@ -108,8 +108,6 @@ export const EMAIL_TEMPLATE_SELECTABLE_COLUMNS = [
   "html",
   "type",
   "isActive",
-  "createdAt",
-  "updatedAt",
 ] as const satisfies ReadonlyArray<keyof typeof emailTemplate.$inferSelect>;
 
 export const emailTemplateColumnSelectSchema = z.object({
@@ -119,8 +117,6 @@ export const emailTemplateColumnSelectSchema = z.object({
   html: z.boolean().optional(),
   type: z.boolean().optional(),
   isActive: z.boolean().optional(),
-  createdAt: z.boolean().optional(),
-  updatedAt: z.boolean().optional(),
 });
 
 export const createEmailTemplateSchema = createInsertSchema(emailTemplate, {
@@ -132,17 +128,21 @@ export const createEmailTemplateSchema = createInsertSchema(emailTemplate, {
   type: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const updateEmailTemplateSchema = createUpdateSchema(emailTemplate, {
   name: nameSchema.optional(),
   subject: subjectSchema.optional(),
   html: htmlSchema.optional(),
+  id: z.string(),
 }).omit({
-  id: true,
   type: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const emailTemplateIdSchema = z.object({

@@ -11,8 +11,8 @@ export const department = pgTable("department", {
   description: text("description"),
   descriptionAr: text("description_ar"),
   logo: text("logo"),
-  createdByUserId: text("created_by_user_id").references(() => user.id),
-  updatedByUserId: text("updated_by_user_id").references(() => user.id),
+  createdBy: text("created_by").references(() => user.id),
+  updatedBy: text("updated_by").references(() => user.id),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

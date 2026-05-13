@@ -27,7 +27,7 @@ export const request = pgTable(
     submissionDate: timestamp("submission_date", { withTimezone: true })
       .defaultNow()
       .notNull(),
-    requestedUserId: text("requested_user_id")
+    requestedBy: text("requested_by")
       .references(() => user.id)
       .notNull(),
     category: categoryEnum("category").notNull(),
@@ -39,6 +39,8 @@ export const request = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true }),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
     formData: jsonb("form_data").$type<Record<string, unknown>>(),
+    createdBy: text("created_by").references(() => user.id),
+    updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -49,7 +51,7 @@ export const request = pgTable(
   },
   (table) => [
     index("request_service_id_idx").on(table.serviceId),
-    index("request_requested_user_id_idx").on(table.requestedUserId),
+    index("request_requested_by_idx").on(table.requestedBy),
     index("request_current_stage_id_idx").on(table.currentStageId),
     index("request_company_id_idx").on(table.companyId),
     index("request_professional_id_idx").on(table.professionalId),
@@ -72,7 +74,7 @@ export const requestHistory = pgTable(
       .notNull(),
     stageCompletedAt: timestamp("stage_completed_at", { withTimezone: true }),
     actionId: uuid("action_id").references(() => action.id),
-    performedByUserId: text("performed_by_user_id")
+    performedBy: text("performed_by")
       .references(() => user.id)
       .notNull(),
     comments: text("comments"),
@@ -91,9 +93,7 @@ export const requestHistory = pgTable(
   (table) => [
     index("request_history_request_id_idx").on(table.requestId),
     index("request_history_stage_id_idx").on(table.stageId),
-    index("request_history_performed_by_user_id_idx").on(
-      table.performedByUserId,
-    ),
+    index("request_history_performed_by_user_id_idx").on(table.performedBy),
     index("request_history_request_created_at_idx").on(
       table.requestId,
       table.createdAt,
@@ -124,7 +124,7 @@ export const requestRelations = relations(request, ({ one, many }) => ({
     references: [service.id],
   }),
   applicant: one(user, {
-    fields: [request.requestedUserId],
+    fields: [request.requestedBy],
     references: [user.id],
     relationName: "applicant",
   }),
@@ -172,7 +172,7 @@ export const requestHistoryRelations = relations(requestHistory, ({ one }) => ({
     references: [action.id],
   }),
   performedBy: one(user, {
-    fields: [requestHistory.performedByUserId],
+    fields: [requestHistory.performedBy],
     references: [user.id],
   }),
 }));

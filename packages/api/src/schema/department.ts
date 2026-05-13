@@ -117,8 +117,6 @@ export const DEPARTMENT_SELECTABLE_COLUMNS = [
   "description",
   "descriptionAr",
   "logo",
-  "createdAt",
-  "updatedAt",
 ] as const satisfies ReadonlyArray<keyof typeof department.$inferSelect>;
 
 export const departmentColumnSelectSchema = z.object({
@@ -129,8 +127,6 @@ export const departmentColumnSelectSchema = z.object({
   description: z.boolean().optional(),
   descriptionAr: z.boolean().optional(),
   logo: z.boolean().optional(),
-  createdAt: z.boolean().optional(),
-  updatedAt: z.boolean().optional(),
 });
 
 export const createDepartmentSchema = createInsertSchema(department, {
@@ -143,8 +139,8 @@ export const createDepartmentSchema = createInsertSchema(department, {
   id: true,
   createdAt: true,
   updatedAt: true,
-  createdByUserId: true,
-  updatedByUserId: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const updateDepartmentSchema = createUpdateSchema(department, {
@@ -155,8 +151,8 @@ export const updateDepartmentSchema = createUpdateSchema(department, {
   id: true,
   createdAt: true,
   updatedAt: true,
-  createdByUserId: true,
-  updatedByUserId: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const departmentIdSchema = z.object({
