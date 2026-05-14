@@ -3,6 +3,7 @@ import { and, count, eq, or } from "@e-service/db/drizzle/orm";
 import { prerequisite } from "@e-service/db/schema/service/prerequisite";
 import { tryCatch } from "@e-service/shared/utils/try-catch";
 import { ORPCError } from "@orpc/server";
+import type { Context } from "../../context";
 import { PREREQUISITE_SORT_FIELDS } from "../../schema/service/prerequisite";
 import type {
   CreatePrerequisiteInput,
@@ -113,11 +114,20 @@ export const getPrerequisite = async ({
 
 export const createPrerequisite = async ({
   input,
+  context,
 }: {
   input: CreatePrerequisiteInput;
+  context: Context;
 }) => {
   const { data: created, error } = await tryCatch(
-    db.insert(prerequisite).values(input).returning(),
+    db
+      .insert(prerequisite)
+      .values({
+        ...input,
+        createdBy: context.session?.user.id,
+        updatedBy: context.session?.user.id,
+      })
+      .returning(),
   );
 
   const newPrerequisite = created?.[0];
@@ -133,7 +143,9 @@ export const createPrerequisite = async ({
 
 export const updatePrerequisite = async ({
   input,
+  context,
 }: {
+  context: Context;
   input: UpdatePrerequisiteInput;
 }) => {
   const { id, ...data } = input;
@@ -141,7 +153,7 @@ export const updatePrerequisite = async ({
   const { data: updated, error } = await tryCatch(
     db
       .update(prerequisite)
-      .set(data)
+      .set({ ...data, updatedBy: context.session?.user.id })
       .where(eq(prerequisite.id, id))
       .returning(),
   );

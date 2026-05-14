@@ -1,4 +1,4 @@
-import { adminProcedure, protectedProcedure, publicProcedure } from "../";
+import { adminProcedure, protectedProcedure } from "../";
 import * as announcementSchema from "../schema/announcement";
 import { successResponseSchema } from "../schema/shared";
 import * as announcementServices from "../services/announcement";
@@ -68,7 +68,7 @@ const remove = adminProcedure
     return await announcementServices.deleteAnnouncement({ input });
   });
 
-export const announcementRouter = publicProcedure
+export const announcementRouter = protectedProcedure
   .tag("Announcement")
   .prefix("/announcements")
   .router({

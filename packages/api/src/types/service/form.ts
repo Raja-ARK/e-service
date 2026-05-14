@@ -1,40 +1,42 @@
 import type { z } from "zod";
 import type {
-  createFormFieldInputSchema,
-  createFormGroupInputSchema,
-  createFormInputSchema,
-  createFormRuleInputSchema,
-  createFormStepInputSchema,
-  formFieldIdSchema,
-  formGroupIdSchema,
-  formIdSchema,
-  formRuleIdSchema,
-  formStepIdSchema,
-  getFormByServiceIdSchema,
-  updateFormFieldInputSchema,
-  updateFormGroupInputSchema,
-  updateFormInputSchema,
-  updateFormRuleInputSchema,
-  updateFormStepInputSchema,
+  createFieldInputSchema,
+  createGroupInputSchema,
+  createRuleInputSchema,
+  createStepInputSchema,
+  fieldIdSchema,
+  getFormByServiceInputSchema,
+  groupIdSchema,
+  listFieldsInputSchema,
+  listGroupsInputSchema,
+  listRulesInputSchema,
+  listStepsInputSchema,
+  ruleIdSchema,
+  stepIdSchema,
+  updateFieldInputSchema,
+  updateGroupInputSchema,
+  updateRuleInputSchema,
+  updateStepInputSchema,
 } from "../../schema/service/form";
 
-export type FormIdInput = z.infer<typeof formIdSchema>;
-export type GetFormByServiceIdInput = z.infer<typeof getFormByServiceIdSchema>;
-export type CreateFormInput = z.infer<typeof createFormInputSchema>;
-export type UpdateFormInput = z.infer<typeof updateFormInputSchema>;
+export type GetFormByServiceInput = z.infer<typeof getFormByServiceInputSchema>;
 
-export type FormStepIdInput = z.infer<typeof formStepIdSchema>;
-export type CreateFormStepInput = z.infer<typeof createFormStepInputSchema>;
-export type UpdateFormStepInput = z.infer<typeof updateFormStepInputSchema>;
+export type StepIdInput = z.infer<typeof stepIdSchema>;
+export type CreateStepInput = z.infer<typeof createStepInputSchema>;
+export type UpdateStepInput = z.infer<typeof updateStepInputSchema>;
+export type ListStepsInput = z.infer<typeof listStepsInputSchema>;
 
-export type FormGroupIdInput = z.infer<typeof formGroupIdSchema>;
-export type CreateFormGroupInput = z.infer<typeof createFormGroupInputSchema>;
-export type UpdateFormGroupInput = z.infer<typeof updateFormGroupInputSchema>;
+export type GroupIdInput = z.infer<typeof groupIdSchema>;
+export type CreateGroupInput = z.infer<typeof createGroupInputSchema>;
+export type UpdateGroupInput = z.infer<typeof updateGroupInputSchema>;
+export type ListGroupsInput = z.infer<typeof listGroupsInputSchema>;
 
-export type FormFieldIdInput = z.infer<typeof formFieldIdSchema>;
-export type CreateFormFieldInput = z.infer<typeof createFormFieldInputSchema>;
-export type UpdateFormFieldInput = z.infer<typeof updateFormFieldInputSchema>;
+export type FieldIdInput = z.infer<typeof fieldIdSchema>;
+export type CreateFieldInput = z.infer<typeof createFieldInputSchema>;
+export type UpdateFieldInput = z.infer<typeof updateFieldInputSchema>;
+export type ListFieldsInput = z.infer<typeof listFieldsInputSchema>;
 
-export type FormRuleIdInput = z.infer<typeof formRuleIdSchema>;
-export type CreateFormRuleInput = z.infer<typeof createFormRuleInputSchema>;
-export type UpdateFormRuleInput = z.infer<typeof updateFormRuleInputSchema>;
+export type RuleIdInput = z.infer<typeof ruleIdSchema>;
+export type CreateRuleInput = z.infer<typeof createRuleInputSchema>;
+export type UpdateRuleInput = z.infer<typeof updateRuleInputSchema>;
+export type ListRulesInput = z.infer<typeof listRulesInputSchema>;

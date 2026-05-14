@@ -1,4 +1,4 @@
-import { adminProcedure, protectedProcedure, publicProcedure } from "../";
+import { adminProcedure, protectedProcedure } from "../";
 import { successResponseSchema } from "../schema/shared";
 import * as userSchema from "../schema/user";
 import * as userServices from "../services/user";
@@ -71,10 +71,13 @@ const update = protectedProcedure
     return await userServices.updateUser({ input, context });
   });
 
-export const userRouter = publicProcedure.tag("User").prefix("/users").router({
-  list,
-  getUser,
-  create,
-  remove,
-  update,
-});
+export const userRouter = protectedProcedure
+  .tag("User")
+  .prefix("/users")
+  .router({
+    list,
+    getUser,
+    create,
+    remove,
+    update,
+  });

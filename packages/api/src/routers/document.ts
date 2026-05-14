@@ -1,4 +1,4 @@
-import { adminProcedure, publicProcedure } from "../";
+import { adminProcedure, protectedProcedure } from "../";
 import * as documentSchema from "../schema/document";
 import { successResponseSchema } from "../schema/shared";
 import * as documentServices from "../services/document";
@@ -68,7 +68,7 @@ const remove = adminProcedure
     return await documentServices.deleteDocumentTemplate({ input });
   });
 
-export const documentRouter = publicProcedure
+export const documentRouter = protectedProcedure
   .tag("Document Template")
   .prefix("/document-templates")
   .router({

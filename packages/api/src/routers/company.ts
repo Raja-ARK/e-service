@@ -1,4 +1,4 @@
-import { protectedProcedure, publicProcedure } from "../";
+import { protectedProcedure } from "../";
 import * as companySchema from "../schema/company";
 import * as companyServices from "../services/company";
 
@@ -28,7 +28,7 @@ const getById = protectedProcedure
     return await companyServices.getCompany({ input, context });
   });
 
-export const companyRouter = publicProcedure
+export const companyRouter = protectedProcedure
   .tag("Company")
   .prefix("/companies")
   .router({

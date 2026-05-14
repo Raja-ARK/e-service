@@ -1,9 +1,8 @@
 CREATE TYPE "public"."gender" AS ENUM('male', 'female', 'other');--> statement-breakpoint
-CREATE TYPE "public"."items_per_page" AS ENUM('10', '20', '30', '40', '50');--> statement-breakpoint
 CREATE TYPE "public"."role" AS ENUM('external', 'internal', 'admin');--> statement-breakpoint
 CREATE TYPE "public"."email_template_type" AS ENUM('sign-up', 'service', 'forget-password', 'email-verification');--> statement-breakpoint
 CREATE TYPE "public"."menu_type" AS ENUM('internal', 'external', 'admin');--> statement-breakpoint
-CREATE TYPE "public"."field_type" AS ENUM('text', 'number', 'date', 'textarea', 'select', 'radio', 'checkbox', 'file', 'time', 'switch', 'slider', 'rating', 'avatar');--> statement-breakpoint
+CREATE TYPE "public"."field_type" AS ENUM('text', 'number', 'date', 'textarea', 'select', 'radio', 'checkbox', 'file', 'time', 'switch', 'slider', 'rating', 'avatar', 'tag-input');--> statement-breakpoint
 CREATE TYPE "public"."form_template_type" AS ENUM('normal', 'table', 'multiple', 'list');--> statement-breakpoint
 CREATE TYPE "public"."form_type" AS ENUM('step', 'group');--> statement-breakpoint
 CREATE TYPE "public"."rule_trigger" AS ENUM('on_change', 'on_next', 'on_submit');--> statement-breakpoint
@@ -11,9 +10,10 @@ CREATE TYPE "public"."step_type" AS ENUM('normal', 'tab');--> statement-breakpoi
 CREATE TYPE "public"."eligible_by" AS ENUM('always', 'status-wise');--> statement-breakpoint
 CREATE TYPE "public"."stage_action_type_external" AS ENUM('submit', 'payment', 'certificate', 'intermediate-submission');--> statement-breakpoint
 CREATE TYPE "public"."stage_action_type_internal" AS ENUM('approve', 'reject', 'send-back', 'schedule-inspection', 'complete-inspection');--> statement-breakpoint
-CREATE TYPE "public"."stage_action_variant" AS ENUM('primary', 'secondary', 'success', 'danger', 'warning', 'info');--> statement-breakpoint
+CREATE TYPE "public"."stage_action_variant" AS ENUM('primary', 'secondary', 'warning', 'warning-outline', 'outline', 'ghost', 'link');--> statement-breakpoint
 CREATE TYPE "public"."category" AS ENUM('professional', 'corporate');--> statement-breakpoint
 CREATE TYPE "public"."hour_format" AS ENUM('12', '24');--> statement-breakpoint
+CREATE TYPE "public"."items_per_page" AS ENUM('10', '20', '30', '40', '50', '75', '100');--> statement-breakpoint
 CREATE TYPE "public"."languages" AS ENUM('english', 'arabic');--> statement-breakpoint
 CREATE TYPE "public"."portal_type" AS ENUM('external', 'internal');--> statement-breakpoint
 CREATE TYPE "public"."theme" AS ENUM('light', 'dark');--> statement-breakpoint
@@ -28,6 +28,8 @@ CREATE TABLE "announcement" (
 	"effective_from" timestamp with time zone NOT NULL,
 	"effective_to" timestamp with time zone,
 	"category" "category"[] DEFAULT '{"corporate","professional"}' NOT NULL,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -131,8 +133,8 @@ CREATE TABLE "department" (
 	"description" text,
 	"description_ar" text,
 	"logo" text,
-	"created_by_user_id" text,
-	"updated_by_user_id" text,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "department_name_unique" UNIQUE("name"),
@@ -145,6 +147,8 @@ CREATE TABLE "document_template" (
 	"name_ar" text,
 	"html" text NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "document_template_name_unique" UNIQUE("name")
@@ -155,19 +159,13 @@ CREATE TABLE "email_template" (
 	"name" text NOT NULL,
 	"subject" text NOT NULL,
 	"html" text NOT NULL,
-	"type" "email_template_type" NOT NULL,
+	"type" "email_template_type" DEFAULT 'service' NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "email_template_name_unique" UNIQUE("name")
-);
---> statement-breakpoint
-CREATE TABLE "lookup_dependencies" (
-	"parent_type" text NOT NULL,
-	"parent_code" text NOT NULL,
-	"child_type" text NOT NULL,
-	"child_code" text NOT NULL,
-	CONSTRAINT "lookup_dependencies_parent_type_parent_code_child_type_child_code_pk" PRIMARY KEY("parent_type","parent_code","child_type","child_code")
 );
 --> statement-breakpoint
 CREATE TABLE "lookup_options" (
@@ -176,6 +174,8 @@ CREATE TABLE "lookup_options" (
 	"code" text NOT NULL,
 	"label" text NOT NULL,
 	"label_ar" text NOT NULL,
+	"parent_type" text,
+	"parent_code" text,
 	"order" integer DEFAULT 0,
 	"is_active" boolean DEFAULT true,
 	"metadata" jsonb DEFAULT '{}'::jsonb,
@@ -211,7 +211,7 @@ CREATE TABLE "organization" (
 	"time_format" text DEFAULT 'hh:mm a' NOT NULL,
 	"hour_format" "hour_format" DEFAULT '12' NOT NULL,
 	"theme" "theme" DEFAULT 'light' NOT NULL,
-	"items_per_page" smallint DEFAULT '10' NOT NULL,
+	"items_per_page" "items_per_page" DEFAULT '10' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -233,7 +233,7 @@ CREATE TABLE "request" (
 	"status" text NOT NULL,
 	"status_ar" text NOT NULL,
 	"submission_date" timestamp with time zone DEFAULT now() NOT NULL,
-	"requested_user_id" text NOT NULL,
+	"requested_by" text NOT NULL,
 	"category" "category" NOT NULL,
 	"current_stage_id" uuid,
 	"company_id" uuid,
@@ -243,6 +243,8 @@ CREATE TABLE "request" (
 	"completed_at" timestamp with time zone,
 	"cancelled_at" timestamp with time zone,
 	"form_data" jsonb,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "request_service_request_no_unique" UNIQUE("service_request_no")
@@ -259,7 +261,7 @@ CREATE TABLE "request_history" (
 	"stage_id" uuid NOT NULL,
 	"stage_completed_at" timestamp with time zone,
 	"action_id" uuid,
-	"performed_by_user_id" text NOT NULL,
+	"performed_by" text NOT NULL,
 	"comments" text,
 	"status" text,
 	"status_ar" text,
@@ -273,7 +275,7 @@ CREATE TABLE "catalog" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"heading" text NOT NULL,
 	"heading_ar" text NOT NULL,
-	"logo" text NOT NULL,
+	"logo" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"service_id" uuid NOT NULL
@@ -300,15 +302,6 @@ CREATE TABLE "catalog_sub_catalog" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "form" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"service_id" uuid NOT NULL,
-	"type" "form_type" DEFAULT 'step' NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "form_service_id_unique" UNIQUE("service_id")
-);
---> statement-breakpoint
 CREATE TABLE "form_field" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"code" text NOT NULL,
@@ -324,7 +317,7 @@ CREATE TABLE "form_field" (
 	"order" smallint DEFAULT 0 NOT NULL,
 	"visibility_condition" jsonb,
 	"hide_for" "portal_type",
-	"config" jsonb DEFAULT '{"required":false,"disabled":false,"minLength":null,"maxLength":null,"min":null,"max":null,"defaultValue":null,"allowedFileTypes":["image/jpeg","image/png","image/gif","image/webp"],"maxFileSize":10485760,"maxFileCount":1,"fieldWidth":"full","fieldAlignment":"left","description":null,"descriptionAr":null,"prefixIcon":null,"suffixIcon":null,"pattern":null,"patternMessage":null,"patternMessageAr":null,"multiple":null}'::jsonb,
+	"config" jsonb DEFAULT '{"required":false,"disabled":false,"minLength":null,"maxLength":null,"min":null,"max":null,"defaultValue":null,"allowedFileTypes":["image/jpeg","image/png","image/gif","image/webp"],"maxFileSize":10485760,"maxFileCount":1,"fieldWidth":"100%","fieldAlignment":"left","description":null,"descriptionAr":null,"prefixIcon":null,"suffixIcon":null,"pattern":null,"patternMessage":null,"patternMessageAr":null,"multiple":null}'::jsonb,
 	"can_edit_in_internal" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -339,7 +332,6 @@ CREATE TABLE "form_field_stage" (
 CREATE TABLE "form_group" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"step_id" uuid NOT NULL,
-	"code" text NOT NULL,
 	"label" text NOT NULL,
 	"label_ar" text NOT NULL,
 	"order" smallint DEFAULT 0 NOT NULL,
@@ -359,12 +351,12 @@ CREATE TABLE "form_group_stage" (
 --> statement-breakpoint
 CREATE TABLE "form_rule" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"form_id" uuid NOT NULL,
+	"service_id" uuid NOT NULL,
 	"name" text NOT NULL,
 	"trigger" "rule_trigger" NOT NULL,
 	"source_field_id" uuid,
 	"step_id" uuid,
-	"condition" jsonb,
+	"condition" jsonb DEFAULT 'null'::jsonb,
 	"actions" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"order" smallint DEFAULT 0 NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
@@ -374,7 +366,7 @@ CREATE TABLE "form_rule" (
 --> statement-breakpoint
 CREATE TABLE "form_step" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"form_id" uuid NOT NULL,
+	"service_id" uuid NOT NULL,
 	"code" text NOT NULL,
 	"title" text NOT NULL,
 	"title_ar" text NOT NULL,
@@ -382,9 +374,10 @@ CREATE TABLE "form_step" (
 	"hide_for" "portal_type",
 	"color" text,
 	"icon" text,
-	"type" "step_type" DEFAULT 'normal' NOT NULL,
+	"type" "form_type" DEFAULT 'step' NOT NULL,
+	"step_type" "step_type" DEFAULT 'normal' NOT NULL,
 	"template_type" "form_template_type" DEFAULT 'normal' NOT NULL,
-	"visibility_condition" jsonb,
+	"visibility_condition" jsonb DEFAULT 'null'::jsonb,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -400,6 +393,8 @@ CREATE TABLE "prerequisite" (
 	"text" text NOT NULL,
 	"text_ar" text NOT NULL,
 	"service_id" uuid NOT NULL,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -408,10 +403,11 @@ CREATE TABLE "service" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
 	"name_ar" text NOT NULL,
-	"logo" text NOT NULL,
+	"logo" text,
 	"description" text NOT NULL,
 	"description_ar" text NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
+	"service_code" text NOT NULL,
 	"department_id" uuid NOT NULL,
 	"category" "category"[] DEFAULT '{"professional"}' NOT NULL,
 	"prefix" text NOT NULL,
@@ -424,10 +420,11 @@ CREATE TABLE "service" (
 	"completion_status" jsonb DEFAULT 'null'::jsonb,
 	"register_company" boolean DEFAULT false NOT NULL,
 	"completion_script" jsonb DEFAULT '[]'::jsonb,
-	"created_by_user_id" text,
-	"updated_by_user_id" text,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "service_service_code_unique" UNIQUE("service_code")
 );
 --> statement-breakpoint
 CREATE TABLE "action" (
@@ -442,14 +439,14 @@ CREATE TABLE "action" (
 	"icon" text,
 	"modal_icon" text,
 	"disabled" boolean DEFAULT false NOT NULL,
-	"show_condition" jsonb,
-	"complete_stage_ids" text[] DEFAULT '{}' NOT NULL,
-	"remove_stage_ids" text[] DEFAULT '{}' NOT NULL,
-	"skip_stages" jsonb DEFAULT '[]'::jsonb NOT NULL,
-	"outcome" jsonb,
+	"show_condition" jsonb DEFAULT 'null'::jsonb,
+	"complete_stage_ids" text[] DEFAULT '{}',
+	"remove_stage_ids" text[] DEFAULT '{}',
+	"skip_stages" jsonb DEFAULT '[]'::jsonb,
+	"outcome" jsonb DEFAULT 'null'::jsonb,
 	"email_template_id" uuid,
-	"created_by_user_id" text,
-	"updated_by_user_id" text,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -461,36 +458,44 @@ CREATE TABLE "stage" (
 	"order" smallint DEFAULT 0 NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"service_id" uuid NOT NULL,
-	"created_by_user_id" text,
-	"updated_by_user_id" text,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+ALTER TABLE "announcement" ADD CONSTRAINT "announcement_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "announcement" ADD CONSTRAINT "announcement_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "company_user" ADD CONSTRAINT "company_user_company_id_company_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."company"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "company_user" ADD CONSTRAINT "company_user_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "department" ADD CONSTRAINT "department_created_by_user_id_user_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "department" ADD CONSTRAINT "department_updated_by_user_id_user_id_fk" FOREIGN KEY ("updated_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "department" ADD CONSTRAINT "department_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "department" ADD CONSTRAINT "department_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "document_template" ADD CONSTRAINT "document_template_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "document_template" ADD CONSTRAINT "document_template_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "email_template" ADD CONSTRAINT "email_template_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "email_template" ADD CONSTRAINT "email_template_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "lookup_options" ADD CONSTRAINT "lookup_options_parent_fk" FOREIGN KEY ("parent_type","parent_code") REFERENCES "public"."lookup_options"("type","code") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "menu" ADD CONSTRAINT "menu_parent_id_menu_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."menu"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "professional" ADD CONSTRAINT "professional_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request" ADD CONSTRAINT "request_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "request" ADD CONSTRAINT "request_requested_user_id_user_id_fk" FOREIGN KEY ("requested_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "request" ADD CONSTRAINT "request_requested_by_user_id_fk" FOREIGN KEY ("requested_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request" ADD CONSTRAINT "request_current_stage_id_stage_id_fk" FOREIGN KEY ("current_stage_id") REFERENCES "public"."stage"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request" ADD CONSTRAINT "request_company_id_company_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."company"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request" ADD CONSTRAINT "request_professional_id_professional_id_fk" FOREIGN KEY ("professional_id") REFERENCES "public"."professional"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "request" ADD CONSTRAINT "request_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "request" ADD CONSTRAINT "request_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request_assignee" ADD CONSTRAINT "request_assignee_request_id_request_id_fk" FOREIGN KEY ("request_id") REFERENCES "public"."request"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request_assignee" ADD CONSTRAINT "request_assignee_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request_history" ADD CONSTRAINT "request_history_request_id_request_id_fk" FOREIGN KEY ("request_id") REFERENCES "public"."request"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request_history" ADD CONSTRAINT "request_history_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request_history" ADD CONSTRAINT "request_history_action_id_action_id_fk" FOREIGN KEY ("action_id") REFERENCES "public"."action"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "request_history" ADD CONSTRAINT "request_history_performed_by_user_id_user_id_fk" FOREIGN KEY ("performed_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "request_history" ADD CONSTRAINT "request_history_performed_by_user_id_fk" FOREIGN KEY ("performed_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "catalog" ADD CONSTRAINT "catalog_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "catalog_point" ADD CONSTRAINT "catalog_point_catalog_id_catalog_id_fk" FOREIGN KEY ("catalog_id") REFERENCES "public"."catalog"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "catalog_point" ADD CONSTRAINT "catalog_point_sub_catalog_id_catalog_sub_catalog_id_fk" FOREIGN KEY ("sub_catalog_id") REFERENCES "public"."catalog_sub_catalog"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "catalog_sub_catalog" ADD CONSTRAINT "catalog_sub_catalog_catalog_id_catalog_id_fk" FOREIGN KEY ("catalog_id") REFERENCES "public"."catalog"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "form" ADD CONSTRAINT "form_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_field" ADD CONSTRAINT "form_field_step_id_form_step_id_fk" FOREIGN KEY ("step_id") REFERENCES "public"."form_step"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_field" ADD CONSTRAINT "form_field_group_id_form_group_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."form_group"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_field_stage" ADD CONSTRAINT "form_field_stage_field_id_form_field_id_fk" FOREIGN KEY ("field_id") REFERENCES "public"."form_field"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -498,35 +503,37 @@ ALTER TABLE "form_field_stage" ADD CONSTRAINT "form_field_stage_stage_id_stage_i
 ALTER TABLE "form_group" ADD CONSTRAINT "form_group_step_id_form_step_id_fk" FOREIGN KEY ("step_id") REFERENCES "public"."form_step"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_group_stage" ADD CONSTRAINT "form_group_stage_group_id_form_group_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."form_group"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_group_stage" ADD CONSTRAINT "form_group_stage_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "form_rule" ADD CONSTRAINT "form_rule_form_id_form_id_fk" FOREIGN KEY ("form_id") REFERENCES "public"."form"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "form_rule" ADD CONSTRAINT "form_rule_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_rule" ADD CONSTRAINT "form_rule_source_field_id_form_field_id_fk" FOREIGN KEY ("source_field_id") REFERENCES "public"."form_field"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_rule" ADD CONSTRAINT "form_rule_step_id_form_step_id_fk" FOREIGN KEY ("step_id") REFERENCES "public"."form_step"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "form_step" ADD CONSTRAINT "form_step_form_id_form_id_fk" FOREIGN KEY ("form_id") REFERENCES "public"."form"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "form_step" ADD CONSTRAINT "form_step_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_step_stage" ADD CONSTRAINT "form_step_stage_step_id_form_step_id_fk" FOREIGN KEY ("step_id") REFERENCES "public"."form_step"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_step_stage" ADD CONSTRAINT "form_step_stage_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "prerequisite" ADD CONSTRAINT "prerequisite_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "prerequisite" ADD CONSTRAINT "prerequisite_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "prerequisite" ADD CONSTRAINT "prerequisite_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "service" ADD CONSTRAINT "service_department_id_department_id_fk" FOREIGN KEY ("department_id") REFERENCES "public"."department"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "service" ADD CONSTRAINT "service_output_document_id_document_template_id_fk" FOREIGN KEY ("output_document_id") REFERENCES "public"."document_template"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "service" ADD CONSTRAINT "service_created_by_user_id_user_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "service" ADD CONSTRAINT "service_updated_by_user_id_user_id_fk" FOREIGN KEY ("updated_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "service" ADD CONSTRAINT "service_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "service" ADD CONSTRAINT "service_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "action" ADD CONSTRAINT "action_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "action" ADD CONSTRAINT "action_email_template_id_email_template_id_fk" FOREIGN KEY ("email_template_id") REFERENCES "public"."email_template"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "action" ADD CONSTRAINT "action_created_by_user_id_user_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "action" ADD CONSTRAINT "action_updated_by_user_id_user_id_fk" FOREIGN KEY ("updated_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action" ADD CONSTRAINT "action_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action" ADD CONSTRAINT "action_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stage" ADD CONSTRAINT "stage_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stage" ADD CONSTRAINT "stage_created_by_user_id_user_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stage" ADD CONSTRAINT "stage_updated_by_user_id_user_id_fk" FOREIGN KEY ("updated_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stage" ADD CONSTRAINT "stage_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stage" ADD CONSTRAINT "stage_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");--> statement-breakpoint
 CREATE INDEX "document_template_name_idx" ON "document_template" USING btree ("name");--> statement-breakpoint
 CREATE INDEX "email_template_type_idx" ON "email_template" USING btree ("type");--> statement-breakpoint
-CREATE INDEX "lookup_dep_parent_idx" ON "lookup_dependencies" USING btree ("parent_type","parent_code");--> statement-breakpoint
 CREATE INDEX "lookup_options_type_idx" ON "lookup_options" USING btree ("type");--> statement-breakpoint
 CREATE INDEX "lookup_options_type_code_idx" ON "lookup_options" USING btree ("type","code");--> statement-breakpoint
+CREATE INDEX "lookup_options_parent_idx" ON "lookup_options" USING btree ("parent_type","parent_code");--> statement-breakpoint
 CREATE INDEX "professional_user_id_idx" ON "professional" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "request_service_id_idx" ON "request" USING btree ("service_id");--> statement-breakpoint
-CREATE INDEX "request_requested_user_id_idx" ON "request" USING btree ("requested_user_id");--> statement-breakpoint
+CREATE INDEX "request_requested_by_idx" ON "request" USING btree ("requested_by");--> statement-breakpoint
 CREATE INDEX "request_current_stage_id_idx" ON "request" USING btree ("current_stage_id");--> statement-breakpoint
 CREATE INDEX "request_company_id_idx" ON "request" USING btree ("company_id");--> statement-breakpoint
 CREATE INDEX "request_professional_id_idx" ON "request" USING btree ("professional_id");--> statement-breakpoint
@@ -535,7 +542,7 @@ CREATE INDEX "request_assignee_request_id_idx" ON "request_assignee" USING btree
 CREATE INDEX "request_assignee_user_id_idx" ON "request_assignee" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "request_history_request_id_idx" ON "request_history" USING btree ("request_id");--> statement-breakpoint
 CREATE INDEX "request_history_stage_id_idx" ON "request_history" USING btree ("stage_id");--> statement-breakpoint
-CREATE INDEX "request_history_performed_by_user_id_idx" ON "request_history" USING btree ("performed_by_user_id");--> statement-breakpoint
+CREATE INDEX "request_history_performed_by_user_id_idx" ON "request_history" USING btree ("performed_by");--> statement-breakpoint
 CREATE INDEX "request_history_request_created_at_idx" ON "request_history" USING btree ("request_id","created_at");--> statement-breakpoint
 CREATE INDEX "catalog_service_id_idx" ON "catalog" USING btree ("service_id");--> statement-breakpoint
 CREATE INDEX "catalog_point_catalog_id_idx" ON "catalog_point" USING btree ("catalog_id");--> statement-breakpoint
@@ -543,8 +550,8 @@ CREATE INDEX "catalog_point_sub_catalog_id_idx" ON "catalog_point" USING btree (
 CREATE INDEX "catalog_sub_catalog_catalog_id_idx" ON "catalog_sub_catalog" USING btree ("catalog_id");--> statement-breakpoint
 CREATE INDEX "form_field_step_id_idx" ON "form_field" USING btree ("step_id");--> statement-breakpoint
 CREATE INDEX "form_field_group_id_idx" ON "form_field" USING btree ("group_id");--> statement-breakpoint
-CREATE INDEX "form_rule_form_id_idx" ON "form_rule" USING btree ("form_id");--> statement-breakpoint
-CREATE INDEX "form_rule_form_order_idx" ON "form_rule" USING btree ("form_id","order");--> statement-breakpoint
+CREATE INDEX "form_rule_service_id_idx" ON "form_rule" USING btree ("service_id");--> statement-breakpoint
+CREATE INDEX "form_rule_service_order_idx" ON "form_rule" USING btree ("service_id","order");--> statement-breakpoint
 CREATE INDEX "prerequisite_service_id_idx" ON "prerequisite" USING btree ("service_id");--> statement-breakpoint
 CREATE INDEX "service_department_id_idx" ON "service" USING btree ("department_id");--> statement-breakpoint
 CREATE INDEX "action_stage_id_idx" ON "action" USING btree ("stage_id");--> statement-breakpoint

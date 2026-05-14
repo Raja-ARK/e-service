@@ -30,7 +30,7 @@ export type FieldRule = {
     | "not_contains"
     | "starts_with"
     | "ends_with";
-  value?: string | string[] | number | boolean;
+  value?: string | string[] | number | boolean | null;
 };
 
 export type VisibilityCondition =
@@ -113,6 +113,16 @@ export type RuleAction =
   | { type: "set_required" | "set_optional"; fieldId: string }
   | { type: "validate"; fieldId: string; message: string; messageAr: string };
 
+export type FieldDefaultValue =
+  | string
+  | number
+  | boolean
+  | [string, string]
+  | string[]
+  | File
+  | File[]
+  | number[];
+
 export type FieldConfig = {
   required: boolean | null;
   disabled: boolean | null;
@@ -120,8 +130,8 @@ export type FieldConfig = {
   maxLength: number | null;
   min: number | null;
   max: number | null;
-  defaultValue: unknown | null;
-  fieldWidth: "full" | "half" | "one-third" | "two-thirds";
+  defaultValue: FieldDefaultValue | null;
+  fieldWidth: "100%" | "50%" | "33.33%" | "66.66%";
   fieldAlignment: "left" | "top";
   description: string | null;
   descriptionAr: string | null;
@@ -134,7 +144,7 @@ export type FieldConfig = {
   patternMessage: string | null;
   patternMessageAr: string | null;
   multiple: boolean | null;
-} | null;
+};
 
 export const formTypeEnum = pgEnum("form_type", ["step", "group"]);
 
@@ -167,29 +177,14 @@ export const fieldTypeEnum = pgEnum("field_type", [
   "slider",
   "rating",
   "avatar",
+  "tag-input",
 ]);
-
-export const form = pgTable("form", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  serviceId: uuid("service_id")
-    .notNull()
-    .unique()
-    .references(() => service.id, { onDelete: "cascade" }),
-  type: formTypeEnum("type").notNull().default("step"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
 
 export const formStep = pgTable("form_step", {
   id: uuid("id").defaultRandom().primaryKey(),
-  formId: uuid("form_id")
+  serviceId: uuid("service_id")
     .notNull()
-    .references(() => form.id, { onDelete: "cascade" }),
+    .references(() => service.id, { onDelete: "cascade" }),
   code: text("code").notNull(),
   title: text("title").notNull(),
   titleAr: text("title_ar").notNull(),
@@ -197,13 +192,14 @@ export const formStep = pgTable("form_step", {
   hideFor: portalTypeEnum("hide_for"),
   color: text("color"),
   icon: text("icon"),
-  type: stepTypeEnum("type").notNull().default("normal"),
+  type: formTypeEnum("type").notNull().default("step"),
+  stepType: stepTypeEnum("step_type").notNull().default("normal"),
   templateType: formTemplateTypeEnum("template_type")
     .notNull()
     .default("normal"),
-  visibilityCondition: jsonb(
-    "visibility_condition",
-  ).$type<VisibilityCondition>(),
+  visibilityCondition: jsonb("visibility_condition")
+    .$type<VisibilityCondition | null>()
+    .default(null),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -219,7 +215,6 @@ export const formGroup = pgTable("form_group", {
   stepId: uuid("step_id")
     .notNull()
     .references(() => formStep.id, { onDelete: "cascade" }),
-  code: text("code").notNull(),
   label: text("label").notNull(),
   labelAr: text("label_ar").notNull(),
   order: smallint("order").notNull().default(0),
@@ -326,7 +321,7 @@ export const formField = pgTable(
         ],
         maxFileSize: 1024 * 1024 * 10, // 10MB
         maxFileCount: 1,
-        fieldWidth: "full",
+        fieldWidth: "100%",
         fieldAlignment: "left",
         description: null,
         descriptionAr: null,
@@ -356,9 +351,9 @@ export const formRule = pgTable(
   "form_rule",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    formId: uuid("form_id")
+    serviceId: uuid("service_id")
       .notNull()
-      .references(() => form.id, { onDelete: "cascade" }),
+      .references(() => service.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     trigger: ruleTriggerEnum("trigger").notNull(),
     // set when trigger = on_change: which field fires this rule
@@ -370,7 +365,9 @@ export const formRule = pgTable(
       onDelete: "cascade",
     }),
     // null condition = always run when triggered
-    condition: jsonb("condition").$type<VisibilityCondition>(),
+    condition: jsonb("condition")
+      .$type<VisibilityCondition | null>()
+      .default(null),
     actions: jsonb("actions").$type<RuleAction[]>().notNull().default([]),
     order: smallint("order").notNull().default(0),
     isActive: boolean("is_active").notNull().default(true),
@@ -383,24 +380,15 @@ export const formRule = pgTable(
       .$onUpdate(() => new Date()),
   },
   (table) => [
-    index("form_rule_form_id_idx").on(table.formId),
-    index("form_rule_form_order_idx").on(table.formId, table.order),
+    index("form_rule_service_id_idx").on(table.serviceId),
+    index("form_rule_service_order_idx").on(table.serviceId, table.order),
   ],
 );
 
-export const formRelations = relations(form, ({ one, many }) => ({
-  service: one(service, {
-    fields: [form.serviceId],
-    references: [service.id],
-  }),
-  steps: many(formStep),
-  rules: many(formRule),
-}));
-
 export const formStepRelations = relations(formStep, ({ one, many }) => ({
-  form: one(form, {
-    fields: [formStep.formId],
-    references: [form.id],
+  service: one(service, {
+    fields: [formStep.serviceId],
+    references: [service.id],
   }),
   groups: many(formGroup),
   fields: many(formField),
@@ -464,9 +452,9 @@ export const formFieldStageRelations = relations(formFieldStage, ({ one }) => ({
 }));
 
 export const formRuleRelations = relations(formRule, ({ one }) => ({
-  form: one(form, {
-    fields: [formRule.formId],
-    references: [form.id],
+  service: one(service, {
+    fields: [formRule.serviceId],
+    references: [service.id],
   }),
   sourceField: one(formField, {
     fields: [formRule.sourceFieldId],

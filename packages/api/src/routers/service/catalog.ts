@@ -1,4 +1,4 @@
-import { adminProcedure, publicProcedure } from "../../";
+import { adminProcedure, protectedProcedure } from "../../";
 import * as catalogSchema from "../../schema/service/catalog";
 import { successResponseSchema } from "../../schema/shared";
 import * as catalogServices from "../../services/service/catalog";
@@ -68,7 +68,7 @@ const remove = adminProcedure
     return await catalogServices.deleteCatalog({ input });
   });
 
-export const catalogRouter = publicProcedure
+export const catalogRouter = protectedProcedure
   .tag("Catalog")
   .prefix("/services/catalogs")
   .router({

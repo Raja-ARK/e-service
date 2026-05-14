@@ -3,6 +3,7 @@ import {
   categoryEnum,
   hourFormatEnum,
   languagesEnum,
+  portalTypeEnum,
   themeEnum,
 } from "@e-service/db/schema/shared";
 import z from "zod";
@@ -11,6 +12,8 @@ export const successResponseSchema = z.object({
   success: z.boolean(),
   message: z.string(),
 });
+
+export const logicOperatorSchema = z.enum(["and", "or"]);
 
 export const categorySchema = z.enum(categoryEnum.enumValues);
 
@@ -92,7 +95,8 @@ export const paginationQuerySchema = z.object({
 
 export const sortDirectionSchema = z.enum(["asc", "desc"]);
 
-/** Generic sort tuple; constrain `field` in domain schemas (e.g. department sort fields). */
+export const portalTypeSchema = z.enum(portalTypeEnum.enumValues);
+
 export const sortItemSchema = z.object({
   field: z.string(),
   direction: sortDirectionSchema,

@@ -1,4 +1,4 @@
-import { adminProcedure, publicProcedure } from "../../";
+import { adminProcedure, protectedProcedure } from "../../";
 import * as prerequisiteSchema from "../../schema/service/prerequisite";
 import { successResponseSchema } from "../../schema/shared";
 import * as prerequisiteServices from "../../services/service/prerequisite";
@@ -38,8 +38,8 @@ const create = adminProcedure
   })
   .input(prerequisiteSchema.createPrerequisiteInputSchema)
   .output(prerequisiteSchema.prerequisiteResponseSchema)
-  .handler(async ({ input }) => {
-    return await prerequisiteServices.createPrerequisite({ input });
+  .handler(async ({ input, context }) => {
+    return await prerequisiteServices.createPrerequisite({ input, context });
   });
 
 const update = adminProcedure
@@ -51,8 +51,8 @@ const update = adminProcedure
   })
   .input(prerequisiteSchema.updatePrerequisiteInputSchema)
   .output(prerequisiteSchema.prerequisiteResponseSchema)
-  .handler(async ({ input }) => {
-    return await prerequisiteServices.updatePrerequisite({ input });
+  .handler(async ({ input, context }) => {
+    return await prerequisiteServices.updatePrerequisite({ input, context });
   });
 
 const remove = adminProcedure
@@ -68,7 +68,7 @@ const remove = adminProcedure
     return await prerequisiteServices.deletePrerequisite({ input });
   });
 
-export const prerequisiteRouter = publicProcedure
+export const prerequisiteRouter = protectedProcedure
   .tag("Prerequisite")
   .prefix("/services/prerequisites")
   .router({

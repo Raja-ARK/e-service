@@ -15,8 +15,10 @@ import {
   categorySchema,
   filterConditionInputSchema,
   filterConditionSchema,
+  logicOperatorSchema,
   paginatedResponseSchema,
   paginationQuerySchema,
+  portalTypeSchema,
   sortDirectionSchema,
 } from "../shared";
 
@@ -42,7 +44,7 @@ const fieldRuleSchema = z.object({
 });
 export const visibilityConditionSchema = z.union([
   z.object({
-    logic: z.enum(["and", "or"]),
+    logic: logicOperatorSchema,
     rules: z.array(fieldRuleSchema),
   }),
   fieldRuleSchema,
@@ -68,7 +70,7 @@ const actionOutcomeSchema = z.object({
 
 const actionConditionSchema = z.object({
   statuses: z.array(z.string()).optional(),
-  roles: z.array(z.enum(["external", "internal"])).optional(),
+  roles: z.array(portalTypeSchema).optional(),
   operator: z.enum(["AND", "OR"]).optional(),
 });
 

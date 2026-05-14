@@ -1,4 +1,4 @@
-import { adminProcedure, publicProcedure } from "../../";
+import { adminProcedure, protectedProcedure } from "../../";
 import * as stageSchema from "../../schema/service/stage";
 import { successResponseSchema } from "../../schema/shared";
 import * as stageServices from "../../services/service/stage";
@@ -68,7 +68,7 @@ const remove = adminProcedure
     return await stageServices.deleteStage({ input });
   });
 
-export const stageRouter = publicProcedure
+export const stageRouter = protectedProcedure
   .tag("Stage")
   .prefix("/services/stages")
   .router({ list, getById, create, update, remove });

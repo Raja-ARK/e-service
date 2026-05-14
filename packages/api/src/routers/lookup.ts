@@ -1,4 +1,4 @@
-import { adminProcedure, protectedProcedure, publicProcedure } from "../";
+import { adminProcedure, protectedProcedure } from "../";
 import * as lookupSchema from "../schema/lookup";
 import { successResponseSchema } from "../schema/shared";
 import * as lookupServices from "../services/lookup";
@@ -109,7 +109,7 @@ const bulkDelete = adminProcedure
     return await lookupServices.bulkDeleteLookupOptions({ input });
   });
 
-export const lookupRouter = publicProcedure
+export const lookupRouter = protectedProcedure
   .tag("Lookup")
   .prefix("/lookups")
   .router({

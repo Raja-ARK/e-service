@@ -1,4 +1,4 @@
-import { adminProcedure, publicProcedure } from "../";
+import { adminProcedure, protectedProcedure } from "../";
 import * as emailSchema from "../schema/email";
 import { successResponseSchema } from "../schema/shared";
 import * as emailServices from "../services/email";
@@ -72,7 +72,7 @@ const remove = adminProcedure
     return await emailServices.deleteEmailTemplate({ input });
   });
 
-export const emailRouter = publicProcedure
+export const emailRouter = protectedProcedure
   .tag("Email Template")
   .prefix("/email-templates")
   .router({

@@ -1,4 +1,4 @@
-import { adminProcedure, publicProcedure } from "../";
+import { adminProcedure, protectedProcedure } from "../";
 import * as departmentSchema from "../schema/department";
 import { successResponseSchema } from "../schema/shared";
 import * as departmentServices from "../services/department";
@@ -72,7 +72,7 @@ const remove = adminProcedure
     return await departmentServices.deleteDepartment({ input });
   });
 
-export const departmentRouter = publicProcedure
+export const departmentRouter = protectedProcedure
   .tag("Department")
   .prefix("/departments")
   .router({

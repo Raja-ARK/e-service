@@ -11,11 +11,11 @@ import { lookupRouter } from "./lookup";
 import { requestRouter } from "./request";
 import { actionRouter } from "./service/action";
 import { catalogRouter } from "./service/catalog";
+import { formRouter } from "./service/form";
 import { prerequisiteRouter } from "./service/prerequisite";
 import { serviceRouter } from "./service/service";
 import { stageRouter } from "./service/stage";
 import { userRouter } from "./user";
-// import { formRuleRouter } from "./service/form";
 
 export const appRouter = {
   auth: authRouter,
@@ -32,8 +32,8 @@ export const appRouter = {
   stage: stageRouter,
   action: actionRouter,
   catalog: catalogRouter,
+  form: formRouter,
   prerequisite: prerequisiteRouter,
-  // formRule: formRuleRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;
