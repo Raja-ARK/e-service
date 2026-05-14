@@ -108,10 +108,15 @@ const titleArSchema = z
     }
   });
 
-export const announcementRowSchema = createSelectSchema(announcement);
+export const announcementSchema = createSelectSchema(announcement).omit({
+  createdBy: true,
+  updatedBy: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 /** Full row subset; validates list/get responses when `select` limits columns. */
-export const announcementPartialSchema = announcementRowSchema.partial();
+export const announcementPartialSchema = announcementSchema.partial();
 
 export const ANNOUNCEMENT_SELECTABLE_COLUMNS = [
   "id",

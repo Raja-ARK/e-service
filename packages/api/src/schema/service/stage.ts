@@ -148,11 +148,16 @@ export const listStagesInputSchema = paginationQuerySchema.extend({
   withoutPagination: z.boolean().optional().default(false),
 });
 
-const stageOutputSchema = createSelectSchema(stage);
-
-export const stageResponseSchema = z.object({
-  stage: stageOutputSchema,
+const stageSchema = createSelectSchema(stage).omit({
+  createdBy: true,
+  updatedBy: true,
+  createdAt: true,
+  updatedAt: true,
+  serviceId: true,
 });
 
-export const listStagesOutputSchema =
-  paginatedResponseSchema(stageOutputSchema);
+export const stageResponseSchema = z.object({
+  stage: stageSchema,
+});
+
+export const listStagesOutputSchema = paginatedResponseSchema(stageSchema);

@@ -88,11 +88,16 @@ const htmlSchema = z.string().check(({ issues, value }) => {
   }
 });
 
-export const documentTemplateRowSchema = createSelectSchema(documentTemplate);
+export const documentTemplateSchema = createSelectSchema(documentTemplate).omit(
+  {
+    createdBy: true,
+    updatedBy: true,
+    createdAt: true,
+    updatedAt: true,
+  },
+);
 
-/** Full row subset; validates list/get responses when `select` limits columns. */
-export const documentTemplatePartialSchema =
-  documentTemplateRowSchema.partial();
+export const documentTemplatePartialSchema = documentTemplateSchema.partial();
 
 export const DOCUMENT_TEMPLATE_SELECTABLE_COLUMNS = [
   "id",
@@ -131,7 +136,11 @@ export const updateDocumentTemplateSchema = createUpdateSchema(
     name: nameSchema.optional(),
     nameAr: nameArSchema.optional(),
     html: htmlSchema.optional(),
-    id: z.string(),
+    id: z
+      .string()
+      .trim()
+      .nonempty("Document template id is required")
+      .nonoptional("Document template id is required"),
   },
 ).omit({
   createdAt: true,
@@ -141,7 +150,11 @@ export const updateDocumentTemplateSchema = createUpdateSchema(
 });
 
 export const documentTemplateIdSchema = z.object({
-  id: z.string(),
+  id: z
+    .string()
+    .trim()
+    .nonempty("Document template id is required")
+    .nonoptional("Document template id is required"),
 });
 
 export const getDocumentTemplateInputSchema = documentTemplateIdSchema.extend({
@@ -159,7 +172,6 @@ export const listDocumentTemplatesInputSchema = paginationQuerySchema.extend({
   filterCondition: filterConditionInputSchema.optional().default("and"),
   sort: documentTemplateSortSchema,
   select: documentTemplateColumnSelectSchema.optional(),
-  /** When true, returns all matching rows (no limit/offset). Use for dropdowns. */
   withoutPagination: z.boolean().optional().default(false),
 });
 

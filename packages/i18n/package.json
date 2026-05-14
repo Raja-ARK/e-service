@@ -28,7 +28,7 @@
   "devDependencies": {
     "@e-service/config": "workspace:*",
     "@types/react": "catalog:",
-    "next": "^16.2.4",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "next": "^16.2.4"
   }
 }

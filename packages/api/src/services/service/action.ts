@@ -14,6 +14,12 @@ import type {
 import { buildWhereClause } from "../../utils/filter";
 import { buildOrderBy } from "../../utils/sort";
 
+const columns = {
+  createdAt: false,
+  updatedAt: false,
+  createdBy: false,
+  updatedBy: false,
+} as const;
 export const listActions = async ({ input }: { input: ListActionsInput }) => {
   const { page, limit, filter, filterCondition, sort, withoutPagination } =
     input;
@@ -37,6 +43,7 @@ export const listActions = async ({ input }: { input: ListActionsInput }) => {
 
   if (withoutPagination) {
     const rows = await db.query.action.findMany({
+      columns,
       where,
       orderBy: (a) =>
         buildOrderBy(a, sort, ACTION_SORT_FIELDS, {
@@ -60,6 +67,7 @@ export const listActions = async ({ input }: { input: ListActionsInput }) => {
 
   const [rows, [total]] = await Promise.all([
     db.query.action.findMany({
+      columns,
       where,
       orderBy: (a) =>
         buildOrderBy(a, sort, ACTION_SORT_FIELDS, {
@@ -89,6 +97,7 @@ export const listActions = async ({ input }: { input: ListActionsInput }) => {
 export const getAction = async ({ input }: { input: ActionIdInput }) => {
   const found = await db.query.action.findFirst({
     where: eq(action.id, input.id),
+    columns,
   });
   if (!found) throw new ORPCError("NOT_FOUND", { message: "Action not found" });
   return { action: found };

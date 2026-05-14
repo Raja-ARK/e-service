@@ -107,9 +107,13 @@ const nameArSchema = z
     }
   });
 
-export const departmentSchema = createSelectSchema(department);
+export const departmentSchema = createSelectSchema(department).omit({
+  createdBy: true,
+  updatedBy: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
-/** Full row subset; validates list/get responses when `select` limits columns. */
 export const departmentPartialSchema = departmentSchema.partial();
 
 export const DEPARTMENT_SELECTABLE_COLUMNS = [
@@ -147,11 +151,15 @@ export const createDepartmentSchema = createInsertSchema(department, {
 });
 
 export const updateDepartmentSchema = createUpdateSchema(department, {
+  id: z
+    .string()
+    .trim()
+    .nonempty("Department id is required")
+    .nonoptional("Department id is required"),
   name: nameSchema.optional(),
   nameAr: nameArSchema.optional(),
   logo: z.file().mime(IMAGE_MIME_TYPES).optional().nullable(),
 }).omit({
-  id: true,
   createdAt: true,
   updatedAt: true,
   createdBy: true,
@@ -177,7 +185,6 @@ export const listDepartmentsInputSchema = paginationQuerySchema.extend({
   filterCondition: filterConditionInputSchema.optional().default("and"),
   sort: departmentSortSchema,
   select: departmentColumnSelectSchema.optional(),
-  /** When true, returns all matching rows (no limit/offset). Use for dropdowns. */
   withoutPagination: z.boolean().optional().default(false),
 });
 

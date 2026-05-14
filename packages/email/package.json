@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@e-service/config": "workspace:*",
-    "@types/nodemailer": "^6.4.17",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "@types/nodemailer": "^6.4.17"
   }
 }

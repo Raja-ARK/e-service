@@ -11,8 +11,18 @@ import type {
   StageIdInput,
   UpdateStageInput,
 } from "../../types/service/stage";
-import { buildWhereClause } from "../../utils/filter";
+import { buildWhereClause, returnDefaultColumns } from "../../utils/filter";
 import { buildOrderBy } from "../../utils/sort";
+
+const columns = {
+  id: true,
+  title: true,
+  titleAr: true,
+  order: true,
+  isActive: true,
+} as const;
+
+const columnKeys = Object.keys(columns) as (keyof typeof columns)[];
 
 export const listStages = async ({ input }: { input: ListStagesInput }) => {
   const { page, limit, filter, filterCondition, sort, withoutPagination } =
@@ -36,6 +46,7 @@ export const listStages = async ({ input }: { input: ListStagesInput }) => {
 
   if (withoutPagination) {
     const rows = await db.query.stage.findMany({
+      columns,
       where,
       orderBy: (s) =>
         buildOrderBy(s, sort, STAGE_SORT_FIELDS, {
@@ -59,6 +70,7 @@ export const listStages = async ({ input }: { input: ListStagesInput }) => {
 
   const [rows, [total]] = await Promise.all([
     db.query.stage.findMany({
+      columns,
       where,
       orderBy: (s) =>
         buildOrderBy(s, sort, STAGE_SORT_FIELDS, {
@@ -87,6 +99,7 @@ export const listStages = async ({ input }: { input: ListStagesInput }) => {
 
 export const getStage = async ({ input }: { input: StageIdInput }) => {
   const found = await db.query.stage.findFirst({
+    columns,
     where: eq(stage.id, input.id),
   });
   if (!found) throw new ORPCError("NOT_FOUND", { message: "Stage not found" });
@@ -119,7 +132,7 @@ export const createStage = async ({
     });
   }
 
-  return { stage: newStage };
+  return { stage: returnDefaultColumns(columnKeys, newStage) };
 };
 
 export const updateStage = async ({
@@ -147,7 +160,7 @@ export const updateStage = async ({
     });
   }
 
-  return { stage: updatedStage };
+  return { stage: returnDefaultColumns(columnKeys, updatedStage) };
 };
 
 export const deleteStage = async ({ input }: { input: StageIdInput }) => {

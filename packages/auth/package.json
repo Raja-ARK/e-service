@@ -19,13 +19,13 @@
     "@e-service/shared": "workspace:*",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "zod": "catalog:",
     "drizzle-orm": "^0.45.2",
-    "ejs": "^3.1.10",
-    "zod": "catalog:"
+    "ejs": "^3.1.10"
   },
   "devDependencies": {
     "@e-service/config": "workspace:*",
-    "@types/ejs": "^3.1.5",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "@types/ejs": "^3.1.5"
   }
 }

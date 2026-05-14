@@ -13,12 +13,9 @@
     "@e-service/auth": "workspace:*",
     "@e-service/env": "workspace:*",
     "@e-service/ui": "workspace:*",
+    "@e-service/i18n": "workspace:*",
     "@orpc/client": "catalog:",
     "@orpc/server": "catalog:",
-    "@orpc/tanstack-query": "^1.14.0",
-    "@tanstack/react-form": "^1.29.1",
-    "@tanstack/react-query": "^5.100.5",
-    "babel-plugin-react-compiler": "^1.0.0",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "lucide-react": "catalog:",
@@ -28,7 +25,11 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "zod": "catalog:",
-    "@e-service/i18n": "workspace:*"
+    "next-intl": "^4.10.1",
+    "@orpc/tanstack-query": "^1.14.0",
+    "@tanstack/react-form": "^1.29.1",
+    "@tanstack/react-query": "^5.100.5",
+    "babel-plugin-react-compiler": "^1.0.0"
   },
   "devDependencies": {
     "@e-service/config": "workspace:*",

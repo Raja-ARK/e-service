@@ -15,7 +15,12 @@ import type {
   ListEmailTemplatesInput,
   UpdateEmailTemplateInput,
 } from "../types/email";
-import { buildColumnsMask, buildWhereClause } from "../utils/filter";
+import {
+  buildColumnsMask,
+  buildWhereClause,
+  buildWithDefaultColumns,
+  returnDefaultColumns,
+} from "../utils/filter";
 import { isConstrainViolation } from "../utils/pg-error";
 import { buildOrderBy } from "../utils/sort";
 
@@ -53,7 +58,9 @@ export const listEmailTemplates = async ({
 
   if (withoutPagination) {
     const rows = await db.query.emailTemplate.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(EMAIL_TEMPLATE_SELECTABLE_COLUMNS),
       where,
       orderBy: (t) =>
         buildOrderBy(t, sort, EMAIL_TEMPLATE_SORT_FIELDS, {
@@ -78,7 +85,9 @@ export const listEmailTemplates = async ({
 
   const [rows, [total]] = await Promise.all([
     db.query.emailTemplate.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(EMAIL_TEMPLATE_SELECTABLE_COLUMNS),
       where,
       orderBy: (t) =>
         buildOrderBy(t, sort, EMAIL_TEMPLATE_SORT_FIELDS, {
@@ -114,7 +123,9 @@ export const getEmailTemplate = async ({
   const columns = buildColumnsMask(select, EMAIL_TEMPLATE_SELECTABLE_COLUMNS);
 
   const found = await db.query.emailTemplate.findFirst({
-    ...(columns ? { columns } : {}),
+    columns: columns
+      ? columns
+      : buildWithDefaultColumns(EMAIL_TEMPLATE_SELECTABLE_COLUMNS),
     where: eq(emailTemplate.id, id),
   });
   if (!found)
@@ -155,7 +166,9 @@ export const createEmailTemplate = async ({
     });
   }
 
-  return { emailTemplate: row };
+  return {
+    emailTemplate: returnDefaultColumns(EMAIL_TEMPLATE_SELECTABLE_COLUMNS, row),
+  };
 };
 
 export const updateEmailTemplate = async ({
@@ -188,7 +201,9 @@ export const updateEmailTemplate = async ({
     });
   }
 
-  return { emailTemplate: row };
+  return {
+    emailTemplate: returnDefaultColumns(EMAIL_TEMPLATE_SELECTABLE_COLUMNS, row),
+  };
 };
 
 export const deleteEmailTemplate = async ({

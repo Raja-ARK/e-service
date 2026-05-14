@@ -1,4 +1,4 @@
-import { adminProcedure } from "../../";
+import { adminProcedure, publicProcedure } from "../../";
 import * as prerequisiteSchema from "../../schema/service/prerequisite";
 import { successResponseSchema } from "../../schema/shared";
 import * as prerequisiteServices from "../../services/service/prerequisite";
@@ -8,7 +8,7 @@ const list = adminProcedure
     method: "GET",
     path: "/prerequisites",
     summary: "List Prerequisites",
-    tags: ["Prerequisite"],
+    description: "List all prerequisites",
   })
   .input(prerequisiteSchema.listPrerequisitesInputSchema)
   .output(prerequisiteSchema.listPrerequisitesOutputSchema)
@@ -21,7 +21,7 @@ const getById = adminProcedure
     method: "GET",
     path: "/prerequisites/{id}",
     summary: "Get Prerequisite",
-    tags: ["Prerequisite"],
+    description: "Get a prerequisite by id",
   })
   .input(prerequisiteSchema.getPrerequisiteInputSchema)
   .output(prerequisiteSchema.prerequisiteResponseSchema)
@@ -34,7 +34,7 @@ const create = adminProcedure
     method: "POST",
     path: "/prerequisites",
     summary: "Create Prerequisite",
-    tags: ["Prerequisite"],
+    description: "Create a new prerequisite",
   })
   .input(prerequisiteSchema.createPrerequisiteInputSchema)
   .output(prerequisiteSchema.prerequisiteResponseSchema)
@@ -47,7 +47,7 @@ const update = adminProcedure
     method: "PUT",
     path: "/prerequisites/{id}",
     summary: "Update Prerequisite",
-    tags: ["Prerequisite"],
+    description: "Update a prerequisite by id",
   })
   .input(prerequisiteSchema.updatePrerequisiteInputSchema)
   .output(prerequisiteSchema.prerequisiteResponseSchema)
@@ -60,7 +60,7 @@ const remove = adminProcedure
     method: "DELETE",
     path: "/prerequisites/{id}",
     summary: "Delete Prerequisite",
-    tags: ["Prerequisite"],
+    description: "Delete a prerequisite by id",
   })
   .input(prerequisiteSchema.prerequisiteIdSchema)
   .output(successResponseSchema)
@@ -68,10 +68,13 @@ const remove = adminProcedure
     return await prerequisiteServices.deletePrerequisite({ input });
   });
 
-export const prerequisiteRouter = {
-  list,
-  getById,
-  create,
-  update,
-  remove,
-};
+export const prerequisiteRouter = publicProcedure
+  .tag("Prerequisite")
+  .prefix("/services/prerequisites")
+  .router({
+    list,
+    getById,
+    create,
+    update,
+    remove,
+  });

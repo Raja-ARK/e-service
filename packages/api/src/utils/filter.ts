@@ -181,3 +181,31 @@ export function buildColumnsMask<Key extends string>(
 
   return hasSelection ? mask : undefined;
 }
+
+export const buildWithDefaultColumns = <Key extends string>(
+  allowedKeys: readonly Key[],
+) => {
+  return allowedKeys.reduce(
+    (acc, key) => {
+      acc[key] = true;
+      return acc;
+    },
+    {} as Record<Key, true>,
+  );
+};
+
+export const returnDefaultColumns = <
+  Key extends string,
+  T extends Record<Key, unknown>,
+>(
+  allowedKeys: readonly Key[],
+  obj: T,
+) => {
+  const result = {} as Pick<T, Key>;
+  for (const key of allowedKeys) {
+    if (key in obj) {
+      result[key] = obj[key];
+    }
+  }
+  return result;
+};

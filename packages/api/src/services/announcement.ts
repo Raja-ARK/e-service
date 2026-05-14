@@ -18,7 +18,9 @@ import type {
 import {
   buildColumnsMask,
   buildWhereClause,
+  buildWithDefaultColumns,
   type FilterCondition,
+  returnDefaultColumns,
 } from "../utils/filter";
 import { isConstrainViolation } from "../utils/pg-error";
 import { buildOrderBy } from "../utils/sort";
@@ -106,7 +108,9 @@ export const listAnnouncements = async ({
 
   const [rows, [total]] = await Promise.all([
     db.query.announcement.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(ANNOUNCEMENT_SELECTABLE_COLUMNS),
       where,
       orderBy: (a) =>
         buildOrderBy(a, sort, ANNOUNCEMENT_SORT_FIELDS, {
@@ -142,7 +146,9 @@ export const getAnnouncement = async ({
   const columns = buildColumnsMask(select, ANNOUNCEMENT_SELECTABLE_COLUMNS);
 
   const found = await db.query.announcement.findFirst({
-    ...(columns ? { columns } : {}),
+    columns: columns
+      ? columns
+      : buildWithDefaultColumns(ANNOUNCEMENT_SELECTABLE_COLUMNS),
     where: eq(announcement.id, id),
   });
   if (!found)
@@ -181,7 +187,9 @@ export const createAnnouncement = async ({
     });
   }
 
-  return { announcement: row };
+  return {
+    announcement: returnDefaultColumns(ANNOUNCEMENT_SELECTABLE_COLUMNS, row),
+  };
 };
 
 export const updateAnnouncement = async ({
@@ -214,7 +222,9 @@ export const updateAnnouncement = async ({
     });
   }
 
-  return { announcement: row };
+  return {
+    announcement: returnDefaultColumns(ANNOUNCEMENT_SELECTABLE_COLUMNS, row),
+  };
 };
 
 export const deleteAnnouncement = async ({

@@ -16,7 +16,12 @@ import type {
   RemoveUserInput,
   UpdateUserInput,
 } from "../types/user";
-import { buildColumnsMask, buildWhereClause } from "../utils/filter";
+import {
+  buildColumnsMask,
+  buildWhereClause,
+  buildWithDefaultColumns,
+  returnDefaultColumns,
+} from "../utils/filter";
 import { isConstrainViolation } from "../utils/pg-error";
 import { buildOrderBy } from "../utils/sort";
 
@@ -62,7 +67,9 @@ export const listUsers = async ({ input }: { input: ListUsersInput }) => {
 
   if (withoutPagination) {
     const rows = await db.query.user.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(USER_SELECTABLE_COLUMNS),
       where,
       orderBy: (u) =>
         buildOrderBy(u, sort, USER_SORT_FIELDS, {
@@ -87,7 +94,9 @@ export const listUsers = async ({ input }: { input: ListUsersInput }) => {
 
   const [rows, [total]] = await Promise.all([
     db.query.user.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(USER_SELECTABLE_COLUMNS),
       where,
       orderBy: (u) =>
         buildOrderBy(u, sort, USER_SORT_FIELDS, {
@@ -132,7 +141,9 @@ export const getUsers = async ({
   const columns = buildColumnsMask(input.select, USER_SELECTABLE_COLUMNS);
 
   const userData = await db.query.user.findFirst({
-    ...(columns ? { columns } : {}),
+    columns: columns
+      ? columns
+      : buildWithDefaultColumns(USER_SELECTABLE_COLUMNS),
     where:
       userSession?.role === "admin" && input.id
         ? eq(user.id, input.id)
@@ -183,7 +194,7 @@ export const createUser = async ({
     });
   }
 
-  return { user: newUser };
+  return { user: returnDefaultColumns(USER_SELECTABLE_COLUMNS, newUser) };
 };
 
 export const removeUser = async ({

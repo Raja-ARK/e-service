@@ -1,5 +1,6 @@
 ﻿import { relations } from "drizzle-orm";
 import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { user } from "../auth";
 import { service } from "./service";
 
 export const prerequisite = pgTable(
@@ -11,6 +12,8 @@ export const prerequisite = pgTable(
     serviceId: uuid("service_id")
       .notNull()
       .references(() => service.id, { onDelete: "cascade" }),
+    createdBy: text("created_by").references(() => user.id),
+    updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

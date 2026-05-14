@@ -27,6 +27,8 @@ export const createPrerequisiteInputSchema = createInsertSchema(prerequisite, {
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const updatePrerequisiteInputSchema = createUpdateSchema(prerequisite, {
@@ -45,6 +47,8 @@ export const updatePrerequisiteInputSchema = createUpdateSchema(prerequisite, {
 }).omit({
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const prerequisiteIdSchema = z.object({
@@ -93,7 +97,13 @@ export const listPrerequisitesInputSchema = paginationQuerySchema.extend({
 
 export const getPrerequisiteInputSchema = prerequisiteIdSchema;
 
-const prerequisiteOutputSchema = createSelectSchema(prerequisite);
+const prerequisiteOutputSchema = createSelectSchema(prerequisite).omit({
+  createdBy: true,
+  updatedBy: true,
+  createdAt: true,
+  updatedAt: true,
+  serviceId: true,
+});
 
 export const prerequisiteResponseSchema = z.object({
   prerequisite: prerequisiteOutputSchema,

@@ -19,6 +19,29 @@ import type {
 import { buildWhereClause } from "../../utils/filter";
 import { buildOrderBy } from "../../utils/sort";
 
+const withNested = {
+  points: {
+    columns: {
+      id: true,
+      text: true,
+      textAr: true,
+      order: true,
+    },
+  },
+  subCatalogs: {
+    columns: {
+      catalogId: false,
+      createdAt: false,
+      updatedAt: false,
+    },
+    with: {
+      points: {
+        columns: { id: true, text: true, textAr: true, order: true },
+      },
+    },
+  },
+} as const;
+
 export const listCatalogs = async ({ input }: { input: ListCatalogsInput }) => {
   const { page, limit, filter, filterCondition, sort, withoutPagination } =
     input;
@@ -37,15 +60,6 @@ export const listCatalogs = async ({ input }: { input: ListCatalogsInput }) => {
         ? and(...conditions)
         : or(...conditions)
       : undefined;
-
-  const withNested = {
-    points: true,
-    subCatalogs: {
-      with: {
-        points: true,
-      },
-    },
-  } as const;
 
   if (withoutPagination) {
     const rows = await db.query.catalog.findMany({
@@ -103,14 +117,12 @@ export const listCatalogs = async ({ input }: { input: ListCatalogsInput }) => {
 export const getCatalog = async ({ input }: { input: CatalogIdInput }) => {
   const found = await db.query.catalog.findFirst({
     where: eq(catalog.id, input.id),
-    with: {
-      points: true,
-      subCatalogs: {
-        with: {
-          points: true,
-        },
-      },
+    columns: {
+      createdAt: false,
+      updatedAt: false,
+      serviceId: false,
     },
+    with: withNested,
   });
   if (!found)
     throw new ORPCError("NOT_FOUND", { message: "Catalog not found" });
@@ -208,10 +220,12 @@ export const createCatalog = async ({
 
   const full = await db.query.catalog.findFirst({
     where: eq(catalog.id, result.id),
-    with: {
-      points: true,
-      subCatalogs: { with: { points: true } },
+    columns: {
+      createdAt: false,
+      updatedAt: false,
+      serviceId: false,
     },
+    with: withNested,
   });
 
   if (!full) {
@@ -339,10 +353,12 @@ export const updateCatalog = async ({
 
   const full = await db.query.catalog.findFirst({
     where: eq(catalog.id, id),
-    with: {
-      points: true,
-      subCatalogs: { with: { points: true } },
+    columns: {
+      createdAt: false,
+      updatedAt: false,
+      serviceId: false,
     },
+    with: withNested,
   });
 
   if (!full) {

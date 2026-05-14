@@ -96,10 +96,14 @@ const htmlSchema = z.string().check(({ issues, value }) => {
   }
 });
 
-export const emailTemplateRowSchema = createSelectSchema(emailTemplate);
+export const emailTemplateSchema = createSelectSchema(emailTemplate).omit({
+  createdBy: true,
+  updatedBy: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
-/** Full row subset; validates list/get responses when `select` limits columns. */
-export const emailTemplatePartialSchema = emailTemplateRowSchema.partial();
+export const emailTemplatePartialSchema = emailTemplateSchema.partial();
 
 export const EMAIL_TEMPLATE_SELECTABLE_COLUMNS = [
   "id",

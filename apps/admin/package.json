@@ -13,31 +13,32 @@
     "@e-service/auth": "workspace:*",
     "@e-service/env": "workspace:*",
     "@e-service/ui": "workspace:*",
+    "@e-service/i18n": "workspace:*",
     "@orpc/client": "catalog:",
     "@orpc/server": "catalog:",
-    "@orpc/tanstack-query": "^1.14.0",
-    "@tanstack/react-form": "^1.29.1",
-    "@tanstack/react-query": "^5.100.5",
-    "babel-plugin-react-compiler": "^1.0.0",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "lucide-react": "catalog:",
-    "next": "^16.2.4",
     "next-themes": "catalog:",
     "nuqs": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "zod": "catalog:",
-    "@e-service/i18n": "workspace:*"
+    "@tanstack/react-query": "^5.100.5",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "@tanstack/react-form": "^1.29.1",
+    "@orpc/tanstack-query": "^1.14.0",
+    "next": "^16.2.4",
+    "next-intl": "^4.10.1"
   },
   "devDependencies": {
     "@e-service/config": "workspace:*",
-    "@tailwindcss/postcss": "^4.2.4",
-    "@tanstack/react-query-devtools": "^5.100.5",
-    "@types/node": "^25.6.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "@tailwindcss/postcss": "^4.2.4",
+    "@tanstack/react-query-devtools": "^5.100.5",
+    "@types/node": "^25.6.0"
   }
 }

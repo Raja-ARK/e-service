@@ -15,7 +15,11 @@ import {
   COMPANY_SORT_FIELDS,
 } from "../schema/company";
 import type { CompanyGetInput, ListCompaniesInput } from "../types/company";
-import { buildColumnsMask, buildWhereClause } from "../utils/filter";
+import {
+  buildColumnsMask,
+  buildWhereClause,
+  buildWithDefaultColumns,
+} from "../utils/filter";
 import { buildOrderBy } from "../utils/sort";
 
 function userLinkedToCompanyExists(userId: string): SQL {
@@ -83,7 +87,9 @@ export const listCompanies = async ({
 
   if (withoutPagination) {
     const rows = await db.query.company.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(COMPANY_SELECTABLE_COLUMNS),
       where,
       orderBy: (c) =>
         buildOrderBy(c, sort, COMPANY_SORT_FIELDS, {
@@ -108,7 +114,9 @@ export const listCompanies = async ({
 
   const [rows, [total]] = await Promise.all([
     db.query.company.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(COMPANY_SELECTABLE_COLUMNS),
       where,
       orderBy: (c) =>
         buildOrderBy(c, sort, COMPANY_SORT_FIELDS, {
@@ -156,7 +164,9 @@ export const getCompany = async ({
       : eq(company.id, id);
 
   const found = await db.query.company.findFirst({
-    ...(columns ? { columns } : {}),
+    columns: columns
+      ? columns
+      : buildWithDefaultColumns(COMPANY_SELECTABLE_COLUMNS),
     where: idWhere,
   });
   if (!found)

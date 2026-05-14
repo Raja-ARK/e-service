@@ -15,7 +15,12 @@ import type {
   ListDocumentTemplatesInput,
   UpdateDocumentTemplateInput,
 } from "../types/document";
-import { buildColumnsMask, buildWhereClause } from "../utils/filter";
+import {
+  buildColumnsMask,
+  buildWhereClause,
+  buildWithDefaultColumns,
+  returnDefaultColumns,
+} from "../utils/filter";
 import { isConstrainViolation } from "../utils/pg-error";
 import { buildOrderBy } from "../utils/sort";
 
@@ -55,7 +60,9 @@ export const listDocumentTemplates = async ({
 
   if (withoutPagination) {
     const rows = await db.query.documentTemplate.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(DOCUMENT_TEMPLATE_SELECTABLE_COLUMNS),
       where,
       orderBy: (t) =>
         buildOrderBy(t, sort, DOCUMENT_TEMPLATE_SORT_FIELDS, {
@@ -80,7 +87,9 @@ export const listDocumentTemplates = async ({
 
   const [rows, [total]] = await Promise.all([
     db.query.documentTemplate.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(DOCUMENT_TEMPLATE_SELECTABLE_COLUMNS),
       where,
       orderBy: (t) =>
         buildOrderBy(t, sort, DOCUMENT_TEMPLATE_SORT_FIELDS, {
@@ -119,7 +128,9 @@ export const getDocumentTemplate = async ({
   );
 
   const found = await db.query.documentTemplate.findFirst({
-    ...(columns ? { columns } : {}),
+    columns: columns
+      ? columns
+      : buildWithDefaultColumns(DOCUMENT_TEMPLATE_SELECTABLE_COLUMNS),
     where: eq(documentTemplate.id, id),
   });
   if (!found)
@@ -160,7 +171,12 @@ export const createDocumentTemplate = async ({
     });
   }
 
-  return { documentTemplate: row };
+  return {
+    documentTemplate: returnDefaultColumns(
+      DOCUMENT_TEMPLATE_SELECTABLE_COLUMNS,
+      row,
+    ),
+  };
 };
 
 export const updateDocumentTemplate = async ({
@@ -193,7 +209,12 @@ export const updateDocumentTemplate = async ({
     });
   }
 
-  return { documentTemplate: row };
+  return {
+    documentTemplate: returnDefaultColumns(
+      DOCUMENT_TEMPLATE_SELECTABLE_COLUMNS,
+      row,
+    ),
+  };
 };
 
 export const deleteDocumentTemplate = async ({

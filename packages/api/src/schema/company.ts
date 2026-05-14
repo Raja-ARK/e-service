@@ -30,9 +30,11 @@ export const companySortSchema = z
   .max(6)
   .optional();
 
-export const companySchema = createSelectSchema(company);
+export const companySchema = createSelectSchema(company).omit({
+  createdAt: true,
+  updatedAt: true,
+});
 
-/** Full row subset; validates list/get responses when `select` limits columns. */
 export const companyPartialSchema = companySchema.partial();
 
 export const COMPANY_SELECTABLE_COLUMNS = [
@@ -42,8 +44,6 @@ export const COMPANY_SELECTABLE_COLUMNS = [
   "status",
   "statusAr",
   "metadata",
-  "createdAt",
-  "updatedAt",
 ] as const satisfies ReadonlyArray<keyof typeof company.$inferSelect>;
 
 export const companyColumnSelectSchema = z.object({
@@ -53,8 +53,6 @@ export const companyColumnSelectSchema = z.object({
   status: z.boolean().optional(),
   statusAr: z.boolean().optional(),
   metadata: z.boolean().optional(),
-  createdAt: z.boolean().optional(),
-  updatedAt: z.boolean().optional(),
 });
 
 export const companyIdSchema = z.object({
@@ -77,7 +75,6 @@ export const listCompaniesInputSchema = paginationQuerySchema.extend({
   filterCondition: filterConditionInputSchema.optional().default("and"),
   sort: companySortSchema,
   select: companyColumnSelectSchema.optional(),
-  /** When true, returns all matching rows (no limit/offset). Use for dropdowns. */
   withoutPagination: z.boolean().optional().default(false),
 });
 

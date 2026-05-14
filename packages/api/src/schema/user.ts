@@ -102,7 +102,10 @@ const nameArSchema = z
   })
   .nullish();
 
-export const userSchema = createSelectSchema(user);
+export const userSchema = createSelectSchema(user).omit({
+  createdAt: true,
+  updatedAt: true,
+});
 
 export const userPartialSchema = userSchema.partial();
 
@@ -131,8 +134,6 @@ export const USER_SELECTABLE_COLUMNS = [
   "defaultTheme",
   "timezone",
   "currency",
-  "createdAt",
-  "updatedAt",
 ] as const satisfies ReadonlyArray<keyof typeof user.$inferSelect>;
 
 export const userColumnSelectSchema = z.object({
@@ -160,8 +161,6 @@ export const userColumnSelectSchema = z.object({
   defaultTheme: z.boolean().optional(),
   timezone: z.boolean().optional(),
   currency: z.boolean().optional(),
-  createdAt: z.boolean().optional(),
-  updatedAt: z.boolean().optional(),
 });
 
 export const userFilterSchema = z.object({

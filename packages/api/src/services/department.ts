@@ -17,7 +17,12 @@ import type {
   ListDepartmentsInput,
   UpdateDepartmentInput,
 } from "../types/department";
-import { buildColumnsMask, buildWhereClause } from "../utils/filter";
+import {
+  buildColumnsMask,
+  buildWhereClause,
+  buildWithDefaultColumns,
+  returnDefaultColumns,
+} from "../utils/filter";
 import { isConstrainViolation } from "../utils/pg-error";
 import { buildOrderBy } from "../utils/sort";
 
@@ -54,7 +59,9 @@ export const listDepartments = async ({
 
   if (withoutPagination) {
     const rows = await db.query.department.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(DEPARTMENT_SELECTABLE_COLUMNS),
       where,
       orderBy: (d) =>
         buildOrderBy(d, sort, DEPARTMENT_SORT_FIELDS, {
@@ -79,7 +86,9 @@ export const listDepartments = async ({
 
   const [rows, [total]] = await Promise.all([
     db.query.department.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(DEPARTMENT_SELECTABLE_COLUMNS),
       where,
       orderBy: (d) =>
         buildOrderBy(d, sort, DEPARTMENT_SORT_FIELDS, {
@@ -115,7 +124,9 @@ export const getDepartment = async ({
   const columns = buildColumnsMask(select, DEPARTMENT_SELECTABLE_COLUMNS);
 
   const found = await db.query.department.findFirst({
-    ...(columns ? { columns } : {}),
+    columns: columns
+      ? columns
+      : buildWithDefaultColumns(DEPARTMENT_SELECTABLE_COLUMNS),
     where: eq(department.id, id),
   });
   if (!found)
@@ -175,14 +186,19 @@ export const createDepartment = async ({
     });
   }
 
-  return { department: newDepartment };
+  return {
+    department: returnDefaultColumns(
+      DEPARTMENT_SELECTABLE_COLUMNS,
+      newDepartment,
+    ),
+  };
 };
 
 export const updateDepartment = async ({
   input,
   context,
 }: {
-  input: DepartmentIdInput & UpdateDepartmentInput;
+  input: UpdateDepartmentInput;
   context: Context;
 }) => {
   const { id, logo, ...data } = input;
@@ -249,7 +265,12 @@ export const updateDepartment = async ({
     await deleteFile(existingKey).catch(() => {});
   }
 
-  return { department: updatedDepartment };
+  return {
+    department: returnDefaultColumns(
+      DEPARTMENT_SELECTABLE_COLUMNS,
+      updatedDepartment,
+    ),
+  };
 };
 
 export const deleteDepartment = async ({

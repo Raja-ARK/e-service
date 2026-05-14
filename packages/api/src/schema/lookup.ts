@@ -148,7 +148,6 @@ export const lookupOptionOutputSchema = z.object({
   lookupOption: lookupOptionPartialSchema,
 });
 
-// Bulk schemas
 export const bulkCreateLookupOptionsSchema = z.object({
   items: z.array(createLookupOptionSchema).min(1).max(500),
 });

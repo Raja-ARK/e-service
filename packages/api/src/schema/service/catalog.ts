@@ -124,37 +124,32 @@ export const listCatalogsInputSchema = paginationQuerySchema.extend({
 
 // --- Output schemas ---
 
-const catalogPointOutputSchema = z.object({
+const catalogPointSchema = z.object({
   id: z.string(),
   text: z.string(),
   textAr: z.string(),
   order: z.number(),
-  catalogId: z.string().nullable(),
-  subCatalogId: z.string().nullable(),
 });
 
-const catalogSubCatalogOutputSchema = z.object({
+const catalogSubCatalogSchema = z.object({
   id: z.string(),
   heading: z.string(),
   headingAr: z.string(),
   order: z.number(),
-  catalogId: z.string(),
-  points: z.array(catalogPointOutputSchema),
+  points: z.array(catalogPointSchema),
 });
 
-export const catalogOutputSchema = z.object({
+export const catalogSchema = z.object({
   id: z.string(),
   heading: z.string(),
   headingAr: z.string(),
   logo: z.string().nullable(),
-  serviceId: z.string(),
-  points: z.array(catalogPointOutputSchema),
-  subCatalogs: z.array(catalogSubCatalogOutputSchema),
+  points: z.array(catalogPointSchema),
+  subCatalogs: z.array(catalogSubCatalogSchema),
 });
 
 export const getCatalogOutputSchema = z.object({
-  catalog: catalogOutputSchema,
+  catalog: catalogSchema,
 });
 
-export const listCatalogsOutputSchema =
-  paginatedResponseSchema(catalogOutputSchema);
+export const listCatalogsOutputSchema = paginatedResponseSchema(catalogSchema);

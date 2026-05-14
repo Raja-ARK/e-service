@@ -18,7 +18,12 @@ import type {
   ListServicesInput,
   UpdateServiceInput,
 } from "../../types/service/service";
-import { buildColumnsMask, buildWhereClause } from "../../utils/filter";
+import {
+  buildColumnsMask,
+  buildWhereClause,
+  buildWithDefaultColumns,
+  returnDefaultColumns,
+} from "../../utils/filter";
 import { isConstrainViolation } from "../../utils/pg-error";
 import { buildOrderBy } from "../../utils/sort";
 
@@ -54,7 +59,9 @@ export const listServices = async ({ input }: { input: ListServicesInput }) => {
 
   if (withoutPagination) {
     const rows = await db.query.service.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(SERVICE_SELECTABLE_COLUMNS),
       where,
       orderBy: (s) =>
         buildOrderBy(s, sort, SERVICE_SORT_FIELDS, {
@@ -78,7 +85,9 @@ export const listServices = async ({ input }: { input: ListServicesInput }) => {
 
   const [rows, [total]] = await Promise.all([
     db.query.service.findMany({
-      ...(columns ? { columns } : {}),
+      columns: columns
+        ? columns
+        : buildWithDefaultColumns(SERVICE_SELECTABLE_COLUMNS),
       where,
       orderBy: (s) =>
         buildOrderBy(s, sort, SERVICE_SORT_FIELDS, {
@@ -110,7 +119,9 @@ export const getService = async ({ input }: { input: GetServiceInput }) => {
   const columns = buildColumnsMask(select, SERVICE_SELECTABLE_COLUMNS);
 
   const found = await db.query.service.findFirst({
-    ...(columns ? { columns } : {}),
+    columns: columns
+      ? columns
+      : buildWithDefaultColumns(SERVICE_SELECTABLE_COLUMNS),
     where: eq(service.id, id),
   });
   if (!found)
@@ -167,7 +178,9 @@ export const createService = async ({
     });
   }
 
-  return { service: newService };
+  return {
+    service: returnDefaultColumns(SERVICE_SELECTABLE_COLUMNS, newService),
+  };
 };
 
 export const updateService = async ({
@@ -242,7 +255,9 @@ export const updateService = async ({
     await deleteFile(existingKey).catch((err) => console.log(err));
   }
 
-  return { service: updatedService };
+  return {
+    service: returnDefaultColumns(SERVICE_SELECTABLE_COLUMNS, updatedService),
+  };
 };
 
 export const deleteService = async ({

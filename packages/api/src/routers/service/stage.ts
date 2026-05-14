@@ -70,5 +70,5 @@ const remove = adminProcedure
 
 export const stageRouter = publicProcedure
   .tag("Stage")
-  .prefix("/stages")
+  .prefix("/services/stages")
   .router({ list, getById, create, update, remove });

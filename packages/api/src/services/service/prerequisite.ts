@@ -10,8 +10,16 @@ import type {
   PrerequisiteIdInput,
   UpdatePrerequisiteInput,
 } from "../../types/service/prerequisite";
-import { buildWhereClause } from "../../utils/filter";
+import { buildWhereClause, returnDefaultColumns } from "../../utils/filter";
 import { buildOrderBy } from "../../utils/sort";
+
+const columns = {
+  id: true,
+  text: true,
+  textAr: true,
+} as const;
+
+const columnKeys = Object.keys(columns) as (keyof typeof columns)[];
 
 export const listPrerequisites = async ({
   input,
@@ -38,6 +46,7 @@ export const listPrerequisites = async ({
 
   if (withoutPagination) {
     const rows = await db.query.prerequisite.findMany({
+      columns,
       where,
       orderBy: (p) =>
         buildOrderBy(p, sort, PREREQUISITE_SORT_FIELDS, {
@@ -61,6 +70,7 @@ export const listPrerequisites = async ({
 
   const [rows, [total]] = await Promise.all([
     db.query.prerequisite.findMany({
+      columns,
       where,
       orderBy: (p) =>
         buildOrderBy(p, sort, PREREQUISITE_SORT_FIELDS, {
@@ -94,6 +104,7 @@ export const getPrerequisite = async ({
 }) => {
   const found = await db.query.prerequisite.findFirst({
     where: eq(prerequisite.id, input.id),
+    columns,
   });
   if (!found)
     throw new ORPCError("NOT_FOUND", { message: "Prerequisite not found" });
@@ -117,7 +128,7 @@ export const createPrerequisite = async ({
     });
   }
 
-  return { prerequisite: newPrerequisite };
+  return { prerequisite: returnDefaultColumns(columnKeys, newPrerequisite) };
 };
 
 export const updatePrerequisite = async ({
@@ -143,7 +154,9 @@ export const updatePrerequisite = async ({
     });
   }
 
-  return { prerequisite: updatedPrerequisite };
+  return {
+    prerequisite: returnDefaultColumns(columnKeys, updatedPrerequisite),
+  };
 };
 
 export const deletePrerequisite = async ({

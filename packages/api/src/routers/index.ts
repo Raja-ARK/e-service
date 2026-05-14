@@ -9,8 +9,13 @@ import { emailRouter } from "./email";
 import { fileRouter } from "./file";
 import { lookupRouter } from "./lookup";
 import { requestRouter } from "./request";
-import { serviceRootRouter } from "./service";
+import { actionRouter } from "./service/action";
+import { catalogRouter } from "./service/catalog";
+import { prerequisiteRouter } from "./service/prerequisite";
+import { serviceRouter } from "./service/service";
+import { stageRouter } from "./service/stage";
 import { userRouter } from "./user";
+// import { formRuleRouter } from "./service/form";
 
 export const appRouter = {
   auth: authRouter,
@@ -23,7 +28,12 @@ export const appRouter = {
   lookup: lookupRouter,
   user: userRouter,
   request: requestRouter,
-  service: serviceRootRouter,
+  service: serviceRouter,
+  stage: stageRouter,
+  action: actionRouter,
+  catalog: catalogRouter,
+  prerequisite: prerequisiteRouter,
+  // formRule: formRuleRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

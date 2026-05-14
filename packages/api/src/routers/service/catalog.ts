@@ -70,7 +70,7 @@ const remove = adminProcedure
 
 export const catalogRouter = publicProcedure
   .tag("Catalog")
-  .prefix("/catalogs")
+  .prefix("/services/catalogs")
   .router({
     list,
     getById,

@@ -322,7 +322,12 @@ export const getServiceInputSchema = serviceIdSchema.extend({
   select: serviceColumnSelectSchema.optional(),
 });
 
-export const serviceSchema = createSelectSchema(service);
+export const serviceSchema = createSelectSchema(service).omit({
+  createdBy: true,
+  updatedBy: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 export const servicePartialSchema = serviceSchema.partial();
 
