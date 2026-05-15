@@ -1,18 +1,19 @@
-﻿import { relations } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import {
   boolean,
   index,
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   smallint,
   text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
 import { user } from "../auth";
+import { documentTemplate } from "../document";
 import { emailTemplate } from "../email";
-import { categoryEnum } from "../shared";
 import {
   formGroupStage,
   formStepStage,
@@ -43,13 +44,6 @@ export type ActionCondition = {
   statuses?: string[]; // show only when request.status is in this list
   roles?: ("external" | "internal")[]; // show only for these user categories
   operator?: "AND" | "OR" | null; // how to combine statuses + roles (default AND)
-};
-
-// A stage to skip when the action fires, with an optional trigger condition and outcome override
-export type SkipStage = {
-  stageId: string; // target stage to skip
-  condition?: VisibilityCondition | null; // only skip when this condition is true
-  outcome?: ActionOutcome | null; // status update to apply when THIS skip path fires (overrides action default outcome)
 };
 
 // Button style applied to the action in the UI
@@ -119,25 +113,20 @@ export const action = pgTable(
       .references(() => stage.id, { onDelete: "cascade" }),
     actionName: text("action_name").notNull(),
     actionNameAr: text("action_name_ar").notNull(),
-    category: categoryEnum("category").notNull(),
+    // category: categoryEnum("category").notNull(),
     actionVariant: stageActionVariantEnum("action_variant")
       .notNull()
       .default("primary"),
     typeExternal: stageActionTypeExternalEnum("type_external"),
     typeInternal: stageActionTypeInternalEnum("type_internal"),
+    order: smallint("order").notNull().default(0),
     icon: text("icon"),
     modalIcon: text("modal_icon"),
     disabled: boolean("disabled").notNull().default(false),
     showCondition: jsonb("show_condition")
       .$type<ActionCondition | null>()
       .default(null), // visibility rule based on request status / user role
-    completeStageIds: text("complete_stage_ids").array().default([]), // stages to mark complete when action fires
-    removeStageIds: text("remove_stage_ids").array().default([]), // stages to remove from request when action fires
-    skipStages: jsonb("skip_stages").$type<SkipStage[]>().default([]), // conditional stage skips; each entry carries its own outcome override
     outcome: jsonb("outcome").$type<ActionOutcome | null>().default(null), // default status update applied on normal completion (overridden per skip entry)
-    emailTemplateId: uuid("email_template_id").references(
-      () => emailTemplate.id,
-    ), // notification email sent to assignee/applicant when this action fires
     createdBy: text("created_by").references(() => user.id),
     updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -151,6 +140,91 @@ export const action = pgTable(
   (table) => [index("action_stage_id_idx").on(table.stageId)],
 );
 
+// Stages to mark complete when this action fires
+export const actionCompleteStage = pgTable(
+  "action_complete_stage",
+  {
+    actionId: uuid("action_id")
+      .notNull()
+      .references(() => action.id, { onDelete: "cascade" }),
+    stageId: uuid("stage_id")
+      .notNull()
+      .references(() => stage.id, { onDelete: "cascade" }),
+  },
+  (table) => [primaryKey({ columns: [table.actionId, table.stageId] })],
+);
+
+// Stages to remove from the request when this action fires
+export const actionRemoveStage = pgTable(
+  "action_remove_stage",
+  {
+    actionId: uuid("action_id")
+      .notNull()
+      .references(() => action.id, { onDelete: "cascade" }),
+    stageId: uuid("stage_id")
+      .notNull()
+      .references(() => stage.id, { onDelete: "cascade" }),
+  },
+  (table) => [primaryKey({ columns: [table.actionId, table.stageId] })],
+);
+
+// Stages to conditionally skip when this action fires
+export const actionSkipStage = pgTable(
+  "action_skip_stage",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    actionId: uuid("action_id")
+      .notNull()
+      .references(() => action.id, { onDelete: "cascade" }),
+    stageId: uuid("stage_id")
+      .notNull()
+      .references(() => stage.id, { onDelete: "cascade" }),
+    condition: jsonb("condition")
+      .$type<VisibilityCondition | null>()
+      .default(null), // only skip when this condition is true
+    outcome: jsonb("outcome").$type<ActionOutcome | null>().default(null), // status update applied when this skip path fires (overrides action default)
+  },
+  (table) => [
+    index("action_skip_stage_action_id_idx").on(table.actionId),
+    index("action_skip_stage_stage_id_idx").on(table.stageId),
+  ],
+);
+
+// An email notification sent when an action fires (an action can trigger multiple emails)
+export const actionEmail = pgTable(
+  "action_email",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    actionId: uuid("action_id")
+      .notNull()
+      .references(() => action.id, { onDelete: "cascade" }),
+    emailTemplateId: uuid("email_template_id")
+      .notNull()
+      .references(() => emailTemplate.id),
+  },
+  (table) => [index("action_email_action_id_idx").on(table.actionId)],
+);
+
+// An attachment sent with an actionEmail — either a document template or a user-uploaded default file
+export const actionEmailAttachment = pgTable(
+  "action_email_attachment",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    actionEmailId: uuid("action_email_id")
+      .notNull()
+      .references(() => actionEmail.id, { onDelete: "cascade" }),
+    documentTemplateId: uuid("document_template_id").references(
+      () => documentTemplate.id,
+    ), // null when attachment is a user-uploaded file
+    fileUrl: text("file_url"), // null when attachment is a user-uploaded file
+  },
+  (table) => [
+    index("action_email_attachment_action_email_id_idx").on(
+      table.actionEmailId,
+    ),
+  ],
+);
+
 export const stageRelations = relations(stage, ({ many, one }) => ({
   formSteps: many(formStepStage),
   formGroups: many(formGroupStage),
@@ -158,4 +232,87 @@ export const stageRelations = relations(stage, ({ many, one }) => ({
     fields: [stage.serviceId],
     references: [service.id],
   }),
+  actions: many(action),
+  completeForActions: many(actionCompleteStage),
+  removeForActions: many(actionRemoveStage),
+  skipForActions: many(actionSkipStage),
 }));
+
+export const actionRelations = relations(action, ({ one, many }) => ({
+  stage: one(stage, {
+    fields: [action.stageId],
+    references: [stage.id],
+  }),
+  completeStages: many(actionCompleteStage),
+  removeStages: many(actionRemoveStage),
+  skipStages: many(actionSkipStage),
+  emails: many(actionEmail),
+}));
+
+export const actionCompleteStageRelations = relations(
+  actionCompleteStage,
+  ({ one }) => ({
+    action: one(action, {
+      fields: [actionCompleteStage.actionId],
+      references: [action.id],
+    }),
+    stage: one(stage, {
+      fields: [actionCompleteStage.stageId],
+      references: [stage.id],
+    }),
+  }),
+);
+
+export const actionRemoveStageRelations = relations(
+  actionRemoveStage,
+  ({ one }) => ({
+    action: one(action, {
+      fields: [actionRemoveStage.actionId],
+      references: [action.id],
+    }),
+    stage: one(stage, {
+      fields: [actionRemoveStage.stageId],
+      references: [stage.id],
+    }),
+  }),
+);
+
+export const actionSkipStageRelations = relations(
+  actionSkipStage,
+  ({ one }) => ({
+    action: one(action, {
+      fields: [actionSkipStage.actionId],
+      references: [action.id],
+    }),
+    stage: one(stage, {
+      fields: [actionSkipStage.stageId],
+      references: [stage.id],
+    }),
+  }),
+);
+
+export const actionEmailRelations = relations(actionEmail, ({ one, many }) => ({
+  action: one(action, {
+    fields: [actionEmail.actionId],
+    references: [action.id],
+  }),
+  emailTemplate: one(emailTemplate, {
+    fields: [actionEmail.emailTemplateId],
+    references: [emailTemplate.id],
+  }),
+  attachments: many(actionEmailAttachment),
+}));
+
+export const actionEmailAttachmentRelations = relations(
+  actionEmailAttachment,
+  ({ one }) => ({
+    actionEmail: one(actionEmail, {
+      fields: [actionEmailAttachment.actionEmailId],
+      references: [actionEmail.id],
+    }),
+    documentTemplate: one(documentTemplate, {
+      fields: [actionEmailAttachment.documentTemplateId],
+      references: [documentTemplate.id],
+    }),
+  }),
+);

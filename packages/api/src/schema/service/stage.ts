@@ -26,33 +26,8 @@ const titleArSchema = z
   })
   .trim()
   .nonempty("Arabic title is required")
-  .check(({ issues, value }) => {
-    if (value && value?.trim() !== "" && !ARABIC_NAME_REGEX.test(value)) {
-      issues.push({
-        code: "custom",
-        message: "Invalid Arabic name",
-        input: value,
-      });
-      return;
-    }
-
-    if (value.length < 2) {
-      issues.push({
-        code: "custom",
-        message: "Arabic title must be at least 2 characters long",
-        input: value,
-      });
-      return;
-    }
-    if (value.length > 250) {
-      issues.push({
-        code: "custom",
-        message: "Arabic title must be less than 250 characters long",
-        input: value,
-      });
-      return;
-    }
-  });
+  .regex(ARABIC_NAME_REGEX, "Invalid Arabic title")
+  .max(250, "Arabic title must be less than 250 characters long");
 
 export const createStageInputSchema = createInsertSchema(stage, {
   title: z
@@ -62,7 +37,7 @@ export const createStageInputSchema = createInsertSchema(stage, {
     .max(250, "Title must be less than 250 characters"),
   titleAr: titleArSchema,
   serviceId: z
-    .string({
+    .uuid({
       error: ({ code }) => {
         if (code === "invalid_type")
           return { message: "Service id is required" };
@@ -70,7 +45,7 @@ export const createStageInputSchema = createInsertSchema(stage, {
     })
     .trim()
     .nonempty("Service id is required"),
-  order: z.number().int().min(0).default(0),
+  order: z.number().int().gte(0, "Order must be greater than 0").default(0),
 }).omit({
   id: true,
   createdAt: true,
@@ -95,7 +70,7 @@ export const updateStageInputSchema = createUpdateSchema(stage, {
     .max(250, "Title must be less than 250 characters")
     .optional(),
   titleAr: titleArSchema.optional(),
-  order: z.number().int().min(0).optional(),
+  order: z.number().int().gte(0, "Order must be greater than 0").optional(),
 }).omit({
   createdAt: true,
   updatedAt: true,

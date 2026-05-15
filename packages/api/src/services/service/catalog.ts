@@ -9,6 +9,7 @@ import { tryCatch } from "@e-service/shared/utils/try-catch";
 import { deleteFile, uploadFile } from "@e-service/storage";
 import { generateKey } from "@e-service/storage/utils";
 import { ORPCError } from "@orpc/server";
+import type { Context } from "../../context";
 import { CATALOG_SORT_FIELDS } from "../../schema/service/catalog";
 import type {
   CatalogIdInput,
@@ -131,26 +132,22 @@ export const getCatalog = async ({ input }: { input: CatalogIdInput }) => {
 
 export const createCatalog = async ({
   input,
+  context,
 }: {
   input: CreateCatalogInput;
+  context: Context;
 }) => {
   const { logo, points, subCatalogs, ...catalogData } = input;
 
   let key = logo ? generateKey(logo, "catalog") : undefined;
 
   if (logo && key) {
-    const { data: uploaded, error: uploadError } = await tryCatch(
+    const { data: uploaded } = await tryCatch(
       uploadFile(key, logo, {
         contentType: logo.type || undefined,
         metadata: { originalName: logo.name },
       }),
     );
-    console.log(uploaded, uploadError);
-    // if (uploadError) {
-    //   throw new ORPCError("BAD_REQUEST", {
-    //     message: uploadError.message ?? "Failed to upload catalog logo",
-    //   });
-    // }
     key = uploaded?.key ?? key;
   }
 
@@ -158,7 +155,12 @@ export const createCatalog = async ({
     db.transaction(async (tx) => {
       const [newCatalog] = await tx
         .insert(catalog)
-        .values({ ...catalogData, logo: logo === null ? null : (key ?? null) })
+        .values({
+          ...catalogData,
+          logo: logo === null ? null : (key ?? null),
+          createdBy: context?.session?.user.id,
+          updatedBy: context?.session?.user.id,
+        })
         .returning();
 
       if (!newCatalog) throw new Error("Failed to create catalog");
@@ -239,8 +241,10 @@ export const createCatalog = async ({
 
 export const updateCatalog = async ({
   input,
+  context,
 }: {
   input: UpdateCatalogInput;
+  context: Context;
 }) => {
   const { id, logo, points, subCatalogs, ...catalogData } = input;
 
@@ -256,19 +260,13 @@ export const updateCatalog = async ({
 
   if (logo) {
     newKey = generateKey(logo, "catalog");
-    const { data: uploaded, error: uploadError } = await tryCatch(
+    const { data: uploaded } = await tryCatch(
       uploadFile(newKey, logo, {
         contentType: logo.type || undefined,
         metadata: { originalName: logo.name },
       }),
     );
     newKey = uploaded?.key ?? newKey;
-    console.log(uploaded, uploadError);
-    // if (uploadError) {
-    //   throw new ORPCError("BAD_REQUEST", {
-    //     message: uploadError.message ?? "Failed to upload catalog logo",
-    //   });
-    // }
   }
 
   const { data: result, error } = await tryCatch(
@@ -280,14 +278,18 @@ export const updateCatalog = async ({
           ...((newKey !== undefined || logo === null) && {
             logo: logo === null ? null : (newKey ?? null),
           }),
+          updatedBy: context?.session?.user.id,
         })
         .where(eq(catalog.id, id))
         .returning();
 
       if (!updated) throw new Error("Catalog not found");
 
+      // Points and subCatalogs are mutually exclusive — sending one wipes the other
       if (points !== undefined) {
-        // delete all direct points for this catalog then reinsert
+        await tx
+          .delete(catalogSubCatalog)
+          .where(eq(catalogSubCatalog.catalogId, id));
         await tx.delete(catalogPoint).where(eq(catalogPoint.catalogId, id));
 
         if (points.length > 0) {
@@ -304,7 +306,7 @@ export const updateCatalog = async ({
       }
 
       if (subCatalogs !== undefined) {
-        // delete all subcatalogs (cascades to their points)
+        await tx.delete(catalogPoint).where(eq(catalogPoint.catalogId, id));
         await tx
           .delete(catalogSubCatalog)
           .where(eq(catalogSubCatalog.catalogId, id));
@@ -336,7 +338,7 @@ export const updateCatalog = async ({
         }
       }
 
-      return updated;
+      return { id };
     }),
   );
 

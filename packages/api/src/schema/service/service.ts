@@ -48,50 +48,22 @@ const nameSchema = z.string().check(({ issues, value }) => {
   }
 });
 
-const nameArSchema = z
-  .string({
-    error: ({ code }) => {
-      if (code === "invalid_type") {
-        return {
-          message: "Arabic name is required",
-        };
-      }
-    },
-  })
-  .trim()
-  .nonempty("Arabic name is required")
-  .check(({ issues, value }) => {
-    if (value && value?.trim() !== "" && !ARABIC_NAME_REGEX.test(value)) {
-      issues.push({
-        code: "custom",
-        message: "Invalid Arabic name",
-        input: value,
-      });
-      return;
-    }
-
-    if (value.length < 2) {
-      issues.push({
-        code: "custom",
-        message: "Arabic name must be at least 2 characters long",
-        input: value,
-      });
-      return;
-    }
-    if (value.length > 250) {
-      issues.push({
-        code: "custom",
-        message: "Arabic name must be less than 250 characters long",
-        input: value,
-      });
-      return;
-    }
-  });
+const arabicSchema = (label: string) =>
+  z
+    .string({
+      error: ({ code }) => {
+        if (code === "invalid_type") return { message: `${label} is required` };
+      },
+    })
+    .trim()
+    .nonempty(`${label} is required`)
+    .regex(ARABIC_NAME_REGEX, `Invalid ${label}`)
+    .max(250, `${label} must be less than 250 characters long`);
 
 export const createServiceInputSchema = createInsertSchema(service, {
   logo: z.file().mime(IMAGE_MIME_TYPES),
   name: nameSchema,
-  nameAr: nameArSchema,
+  nameAr: arabicSchema("Arabic name"),
   description: z
     .string()
     .trim()
@@ -108,6 +80,7 @@ export const createServiceInputSchema = createInsertSchema(service, {
     .trim()
     .nonempty("Service code is required")
     .nonoptional("Service code is required"),
+  outputDocNameAr: arabicSchema("Arabic output document name").nullish(),
   completionStatus: serviceCompletionStatusSchema.optional().nullish(),
   completionScript: z
     .array(
@@ -130,6 +103,11 @@ export const createServiceInputSchema = createInsertSchema(service, {
     )
     .optional()
     .nullish(),
+  processDays: z
+    .number()
+    .int()
+    .gte(0, "Process days must be greater than 0")
+    .default(0),
 }).omit({
   id: true,
   createdAt: true,
@@ -154,7 +132,7 @@ export const updateServiceInputSchema = createUpdateSchema(service, {
     .nonoptional("Service id is required"),
   logo: z.file().mime(IMAGE_MIME_TYPES).optional(),
   name: nameSchema.optional(),
-  nameAr: nameArSchema.optional(),
+  nameAr: arabicSchema("Arabic name").optional(),
   description: z
     .string()
     .trim()
@@ -174,6 +152,7 @@ export const updateServiceInputSchema = createUpdateSchema(service, {
     .nonempty("Service code is required")
     .nonoptional("Service code is required")
     .optional(),
+  outputDocNameAr: arabicSchema("Arabic output document name").nullish(),
   completionStatus: serviceCompletionStatusSchema.optional().nullish(),
   completionScript: z
     .array(
@@ -190,12 +169,15 @@ export const updateServiceInputSchema = createUpdateSchema(service, {
             },
           })
           .trim()
-          .nonempty("Script is required")
-          .nonoptional("Script is required"),
+          .nonempty("Script is required"),
       }),
     )
-    .optional()
     .nullish(),
+  processDays: z
+    .number()
+    .int()
+    .gte(0, "Process days must be greater than 0")
+    .optional(),
 }).omit({
   createdAt: true,
   updatedAt: true,

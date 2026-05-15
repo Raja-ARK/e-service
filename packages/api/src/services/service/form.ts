@@ -9,13 +9,13 @@ import {
   formRule,
   formStep,
   formStepStage,
-  type RuleAction,
 } from "@e-service/db/schema/service/form";
 import { IMAGE_MIME_TYPES } from "@e-service/shared/utils/constant";
 import { tryCatch } from "@e-service/shared/utils/try-catch";
 import { deleteFile, uploadFile } from "@e-service/storage";
 import { generateKey } from "@e-service/storage/utils";
 import { ORPCError } from "@orpc/server";
+import type { Context } from "../../context";
 import {
   FIELD_SORT_FIELDS,
   GROUP_SORT_FIELDS,
@@ -50,7 +50,6 @@ const stageRefColumns = {
   id: true,
   title: true,
   titleAr: true,
-  order: true,
 } as const;
 
 const stepWith = {
@@ -69,7 +68,6 @@ type StageRef = {
   id: string;
   title: string;
   titleAr: string;
-  order: number;
 };
 
 const flattenStages = <T extends { stages: { stage: StageRef }[] }>(
@@ -217,7 +215,12 @@ export const listSteps = async ({ input }: { input: ListStepsInput }) => {
     const rows = await db.query.formStep.findMany({
       where,
       with: stepWith,
-      columns: { createdAt: false, updatedAt: false },
+      columns: {
+        createdAt: false,
+        updatedAt: false,
+        createdBy: false,
+        updatedBy: false,
+      },
       orderBy: (s) =>
         buildOrderBy(s, sort, STEP_SORT_FIELDS, {
           field: "order",
@@ -241,7 +244,12 @@ export const listSteps = async ({ input }: { input: ListStepsInput }) => {
     db.query.formStep.findMany({
       where,
       with: stepWith,
-      columns: { createdAt: false, updatedAt: false },
+      columns: {
+        createdAt: false,
+        updatedAt: false,
+        createdBy: false,
+        updatedBy: false,
+      },
       orderBy: (s) =>
         buildOrderBy(s, sort, STEP_SORT_FIELDS, {
           field: "order",
@@ -268,24 +276,40 @@ export const listSteps = async ({ input }: { input: ListStepsInput }) => {
 export const getStep = async ({ input }: { input: StepIdInput }) => {
   const found = await db.query.formStep.findFirst({
     where: eq(formStep.id, input.id),
-    columns: { createdAt: false, updatedAt: false },
+    columns: {
+      createdAt: false,
+      updatedAt: false,
+      createdBy: false,
+      updatedBy: false,
+    },
     with: stepWith,
   });
   if (!found) throw new ORPCError("NOT_FOUND", { message: "Step not found" });
   return { step: flattenStages(found) };
 };
 
-export const createStep = async ({ input }: { input: CreateStepInput }) => {
+export const createStep = async ({
+  input,
+  context,
+}: {
+  input: CreateStepInput;
+  context: Context;
+}) => {
   const { icon, stageIds, ...stepData } = input;
 
   let iconKey: string | undefined;
-  if (icon) iconKey = await uploadIcon(icon, "form-step");
+  if (icon) iconKey = await uploadIcon(icon, "service/form-step");
 
   const { data: result, error } = await tryCatch(
     db.transaction(async (tx) => {
       const [inserted] = await tx
         .insert(formStep)
-        .values({ ...stepData, icon: iconKey ?? null })
+        .values({
+          ...stepData,
+          icon: iconKey ?? null,
+          createdBy: context?.session?.user.id,
+          updatedBy: context?.session?.user.id,
+        })
         .returning();
       if (!inserted) throw new Error("Failed to create step");
 
@@ -307,10 +331,19 @@ export const createStep = async ({ input }: { input: CreateStepInput }) => {
     });
   }
 
-  return await getStep({ input: { id: result.id } });
+  return {
+    success: true,
+    message: "Step created",
+  };
 };
 
-export const updateStep = async ({ input }: { input: UpdateStepInput }) => {
+export const updateStep = async ({
+  input,
+  context,
+}: {
+  input: UpdateStepInput;
+  context: Context;
+}) => {
   const { id, icon, stageIds, ...data } = input;
 
   const existing = await db.query.formStep.findFirst({
@@ -321,7 +354,7 @@ export const updateStep = async ({ input }: { input: UpdateStepInput }) => {
     throw new ORPCError("NOT_FOUND", { message: "Step not found" });
 
   let newKey: string | undefined;
-  if (icon) newKey = await uploadIcon(icon, "form-step");
+  if (icon) newKey = await uploadIcon(icon, "service/form-step");
 
   const { data: result, error } = await tryCatch(
     db.transaction(async (tx) => {
@@ -332,6 +365,7 @@ export const updateStep = async ({ input }: { input: UpdateStepInput }) => {
           ...((newKey !== undefined || icon === null) && {
             icon: icon === null ? null : (newKey ?? null),
           }),
+          updatedBy: context?.session?.user.id,
         })
         .where(eq(formStep.id, id))
         .returning();
@@ -360,7 +394,10 @@ export const updateStep = async ({ input }: { input: UpdateStepInput }) => {
     await deleteFile(existing.icon).catch(() => {});
   }
 
-  return await getStep({ input: { id } });
+  return {
+    success: true,
+    message: "Step updated",
+  };
 };
 
 export const deleteStep = async ({ input }: { input: StepIdInput }) => {
@@ -458,19 +495,30 @@ export const getGroup = async ({ input }: { input: GroupIdInput }) => {
   return { group: flattenStages(found) };
 };
 
-export const createGroup = async ({ input }: { input: CreateGroupInput }) => {
+export const createGroup = async ({
+  input,
+  context,
+}: {
+  input: CreateGroupInput;
+  context: Context;
+}) => {
   const { icon, stageIds, ...groupData } = input;
 
   let iconKey: string | undefined;
-  if (icon) iconKey = await uploadIcon(icon, "form-group");
+  if (icon) iconKey = await uploadIcon(icon, "service/form-group");
 
   const { data: result, error } = await tryCatch(
     db.transaction(async (tx) => {
       const [inserted] = await tx
         .insert(formGroup)
-        .values({ ...groupData, icon: iconKey ?? null })
+        .values({
+          ...groupData,
+          icon: iconKey ?? null,
+          createdBy: context?.session?.user.id,
+          updatedBy: context?.session?.user.id,
+        })
         .returning();
-      if (!inserted) throw new Error("Failed to create group");
+      if (!inserted) throw new Error("Group not found");
       if (stageIds.length > 0) {
         await tx
           .insert(formGroupStage)
@@ -489,10 +537,19 @@ export const createGroup = async ({ input }: { input: CreateGroupInput }) => {
     });
   }
 
-  return await getGroup({ input: { id: result.id } });
+  return {
+    success: true,
+    message: "Group created",
+  };
 };
 
-export const updateGroup = async ({ input }: { input: UpdateGroupInput }) => {
+export const updateGroup = async ({
+  input,
+  context,
+}: {
+  input: UpdateGroupInput;
+  context: Context;
+}) => {
   const { id, icon, stageIds, ...data } = input;
 
   const existing = await db.query.formGroup.findFirst({
@@ -503,7 +560,7 @@ export const updateGroup = async ({ input }: { input: UpdateGroupInput }) => {
     throw new ORPCError("NOT_FOUND", { message: "Group not found" });
 
   let newKey: string | undefined;
-  if (icon) newKey = await uploadIcon(icon, "form-group");
+  if (icon) newKey = await uploadIcon(icon, "service/form-group");
 
   const { data: result, error } = await tryCatch(
     db.transaction(async (tx) => {
@@ -514,6 +571,7 @@ export const updateGroup = async ({ input }: { input: UpdateGroupInput }) => {
           ...((newKey !== undefined || icon === null) && {
             icon: icon === null ? null : (newKey ?? null),
           }),
+          updatedBy: context?.session?.user.id,
         })
         .where(eq(formGroup.id, id))
         .returning();
@@ -542,7 +600,10 @@ export const updateGroup = async ({ input }: { input: UpdateGroupInput }) => {
     await deleteFile(existing.icon).catch(() => {});
   }
 
-  return await getGroup({ input: { id } });
+  return {
+    success: true,
+    message: "Group updated",
+  };
 };
 
 export const deleteGroup = async ({ input }: { input: GroupIdInput }) => {
@@ -643,13 +704,21 @@ export const getField = async ({ input }: { input: FieldIdInput }) => {
   return { field: flattenStages(found) };
 };
 
-export const createField = async ({ input }: { input: CreateFieldInput }) => {
+export const createField = async ({
+  input,
+  context,
+}: {
+  input: CreateFieldInput;
+  context: Context;
+}) => {
   const { prefixIcon, suffixIcon, stageIds, config, ...fieldData } = input;
 
   let prefixKey: string | undefined;
   let suffixKey: string | undefined;
-  if (prefixIcon) prefixKey = await uploadIcon(prefixIcon, "form-field-icon");
-  if (suffixIcon) suffixKey = await uploadIcon(suffixIcon, "form-field-icon");
+  if (prefixIcon)
+    prefixKey = await uploadIcon(prefixIcon, "service/form-field-icon");
+  if (suffixIcon)
+    suffixKey = await uploadIcon(suffixIcon, "service/form-field-icon");
 
   const mergedConfig: FieldConfig = {
     ...defaultFieldConfig,
@@ -662,9 +731,14 @@ export const createField = async ({ input }: { input: CreateFieldInput }) => {
     db.transaction(async (tx) => {
       const [inserted] = await tx
         .insert(formField)
-        .values({ ...fieldData, config: mergedConfig })
+        .values({
+          ...fieldData,
+          config: mergedConfig,
+          createdBy: context?.session?.user.id,
+          updatedBy: context?.session?.user.id,
+        })
         .returning();
-      if (!inserted) throw new Error("Failed to create field");
+      if (!inserted) throw new Error("Field not found");
       if (stageIds.length > 0) {
         await tx
           .insert(formFieldStage)
@@ -684,10 +758,19 @@ export const createField = async ({ input }: { input: CreateFieldInput }) => {
     });
   }
 
-  return await getField({ input: { id: result.id } });
+  return {
+    success: true,
+    message: "Field created",
+  };
 };
 
-export const updateField = async ({ input }: { input: UpdateFieldInput }) => {
+export const updateField = async ({
+  input,
+  context,
+}: {
+  input: UpdateFieldInput;
+  context: Context;
+}) => {
   const { id, prefixIcon, suffixIcon, stageIds, config, ...data } = input;
 
   const existing = await db.query.formField.findFirst({
@@ -701,8 +784,10 @@ export const updateField = async ({ input }: { input: UpdateFieldInput }) => {
 
   let prefixKey: string | undefined;
   let suffixKey: string | undefined;
-  if (prefixIcon) prefixKey = await uploadIcon(prefixIcon, "form-field-icon");
-  if (suffixIcon) suffixKey = await uploadIcon(suffixIcon, "form-field-icon");
+  if (prefixIcon)
+    prefixKey = await uploadIcon(prefixIcon, "service/form-field-icon");
+  if (suffixIcon)
+    suffixKey = await uploadIcon(suffixIcon, "service/form-field-icon");
 
   const nextConfig: FieldConfig = {
     ...oldConfig,
@@ -717,7 +802,11 @@ export const updateField = async ({ input }: { input: UpdateFieldInput }) => {
     db.transaction(async (tx) => {
       const [updated] = await tx
         .update(formField)
-        .set({ ...data, config: nextConfig })
+        .set({
+          ...data,
+          config: nextConfig,
+          updatedBy: context?.session?.user.id,
+        })
         .where(eq(formField.id, id))
         .returning();
       if (!updated) throw new Error("Field not found");
@@ -749,7 +838,10 @@ export const updateField = async ({ input }: { input: UpdateFieldInput }) => {
     await deleteFile(oldConfig.suffixIcon).catch(() => {});
   }
 
-  return await getField({ input: { id } });
+  return {
+    success: true,
+    message: "Field updated",
+  };
 };
 
 export const deleteField = async ({ input }: { input: FieldIdInput }) => {
@@ -849,11 +941,22 @@ export const getRule = async ({ input }: { input: RuleIdInput }) => {
   return { rule: found };
 };
 
-export const createRule = async ({ input }: { input: CreateRuleInput }) => {
+export const createRule = async ({
+  input,
+  context,
+}: {
+  input: CreateRuleInput;
+  context: Context;
+}) => {
   const { data: created, error } = await tryCatch(
     db
       .insert(formRule)
-      .values({ ...input, actions: input.actions as RuleAction[] })
+      .values({
+        ...input,
+        actions: input.actions,
+        createdBy: context?.session?.user.id,
+        updatedBy: context?.session?.user.id,
+      })
       .returning(),
   );
   const row = created?.[0];
@@ -862,17 +965,24 @@ export const createRule = async ({ input }: { input: CreateRuleInput }) => {
       message: error?.message ?? "Failed to create rule",
     });
   }
-  return await getRule({ input: { id: row.id } });
+  return { success: true, message: "Rule created" };
 };
 
-export const updateRule = async ({ input }: { input: UpdateRuleInput }) => {
+export const updateRule = async ({
+  input,
+  context,
+}: {
+  input: UpdateRuleInput;
+  context: Context;
+}) => {
   const { id, actions, ...data } = input;
   const { data: updated, error } = await tryCatch(
     db
       .update(formRule)
       .set({
         ...data,
-        ...(actions !== undefined && { actions: actions as RuleAction[] }),
+        ...(actions !== undefined && { actions: actions }),
+        updatedBy: context?.session?.user.id,
       })
       .where(eq(formRule.id, id))
       .returning(),
@@ -883,7 +993,7 @@ export const updateRule = async ({ input }: { input: UpdateRuleInput }) => {
       message: error?.message ?? "Failed to update rule",
     });
   }
-  return await getRule({ input: { id } });
+  return { success: true, message: "Rule updated" };
 };
 
 export const deleteRule = async ({ input }: { input: RuleIdInput }) => {

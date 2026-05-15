@@ -7,6 +7,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { user } from "../auth";
 import { service } from "./service";
 
 export const catalog = pgTable(
@@ -16,6 +17,8 @@ export const catalog = pgTable(
     heading: text("heading").notNull(),
     headingAr: text("heading_ar").notNull(),
     logo: text("logo"),
+    createdBy: text("created_by").references(() => user.id),
+    updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

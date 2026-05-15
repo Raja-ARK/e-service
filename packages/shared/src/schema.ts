@@ -1,4 +1,5 @@
 import z from "zod";
+import { ARABIC_NAME_REGEX } from "./utils/constant";
 
 export const emailSchema = z.email({
   error: ({ code, input }) => {
@@ -69,7 +70,7 @@ export const serviceCompletionStatusSchema = z.union([
       })
       .trim()
       .nonempty("Arabic status is required")
-      .nonoptional("Arabic status is required"),
+      .regex(ARABIC_NAME_REGEX, "Invalid Arabic status"),
   }),
   z.array(
     z.object({
@@ -84,8 +85,7 @@ export const serviceCompletionStatusSchema = z.union([
           },
         })
         .trim()
-        .nonempty("Eligible status is required")
-        .nonoptional("Eligible status is required"),
+        .nonempty("Eligible status is required"),
       status: z
         .string({
           error: ({ code }) => {
@@ -111,7 +111,7 @@ export const serviceCompletionStatusSchema = z.union([
         })
         .trim()
         .nonempty("Arabic status is required")
-        .nonoptional("Arabic status is required"),
+        .regex(ARABIC_NAME_REGEX, "Invalid Arabic status"),
     }),
   ),
 ]);

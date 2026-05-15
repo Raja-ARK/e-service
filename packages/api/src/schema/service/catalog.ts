@@ -1,4 +1,7 @@
-import { IMAGE_MIME_TYPES } from "@e-service/shared/utils/constant";
+import {
+  ARABIC_NAME_REGEX,
+  IMAGE_MIME_TYPES,
+} from "@e-service/shared/utils/constant";
 import { z } from "zod";
 import {
   filterConditionInputSchema,
@@ -14,34 +17,46 @@ const headingSchema = z
   .min(2, "Heading must be at least 2 characters")
   .max(500, "Heading must be less than 500 characters");
 
+const arabicSchema = (label: string, maxLength: number) =>
+  z
+    .string()
+    .trim()
+    .nonempty(`${label} is required`)
+    .regex(ARABIC_NAME_REGEX, `Invalid ${label}`)
+    .max(maxLength, `${label} must be less than ${maxLength} characters long`);
+
 const pointInputSchema = z.object({
   text: z
     .string()
     .trim()
     .nonempty("Point text is required")
     .max(2000, "Point text must be less than 2000 characters"),
-  textAr: z
-    .string()
-    .trim()
-    .nonempty("Arabic point text is required")
-    .max(2000, "Arabic point text must be less than 2000 characters"),
-  order: z.number().int().min(0).default(0),
+  textAr: arabicSchema("point text", 2000),
+  order: z
+    .number()
+    .int()
+    .gte(0, "Order must be greater than or equal to 0")
+    .default(0),
 });
 
 const subCatalogInputSchema = z.object({
   heading: headingSchema,
-  headingAr: headingSchema,
-  order: z.number().int().min(0).default(0),
+  headingAr: arabicSchema("heading", 500),
+  order: z
+    .number()
+    .int()
+    .gte(0, "Order must be greater than or equal to 0")
+    .default(0),
   points: z
     .array(pointInputSchema)
-    .min(1, "Subcatalog must have at least one point"),
+    .min(1, "Sub catalog must have at least one point"),
 });
 
 export const createCatalogInputSchema = z
   .object({
     serviceId: z.string().trim().nonempty("Service id is required"),
     heading: headingSchema,
-    headingAr: headingSchema,
+    headingAr: arabicSchema("heading", 250),
     logo: z.file().mime(IMAGE_MIME_TYPES).nullish(),
     points: z.array(pointInputSchema).optional().default([]),
     subCatalogs: z.array(subCatalogInputSchema).optional().default([]),
@@ -50,32 +65,86 @@ export const createCatalogInputSchema = z
     if (value?.points?.length === 0 && value?.subCatalogs?.length === 0) {
       issues.push({
         code: "custom",
-        message: "Catalog must have at least one point or subcatalog",
+        message: "Catalog must have at least one point or sub catalog",
+        input: value,
+      });
+    }
+
+    if (value?.subCatalogs?.length > 0 && value?.points?.length > 0) {
+      issues.push({
+        code: "custom",
+        message: "Catalog cannot have both points and sub catalogs",
         input: value,
       });
     }
   });
 
-export const updateCatalogInputSchema = z.object({
-  id: z
-    .string({
-      error: ({ code }) => {
-        if (code === "invalid_type") {
-          return {
-            message: "Catalog id is required",
-          };
-        }
-      },
-    })
-    .trim()
-    .nonempty("Catalog id is required")
-    .nonoptional("Catalog id is required"),
-  heading: headingSchema.optional(),
-  headingAr: headingSchema.optional(),
-  logo: z.file().mime(IMAGE_MIME_TYPES).nullish(),
-  points: z.array(pointInputSchema).optional(),
-  subCatalogs: z.array(subCatalogInputSchema).optional(),
-});
+export const updateCatalogInputSchema = z
+  .object({
+    id: z
+      .string({
+        error: ({ code }) => {
+          if (code === "invalid_type") {
+            return {
+              message: "Catalog id is required",
+            };
+          }
+        },
+      })
+      .trim()
+      .nonempty("Catalog id is required")
+      .nonoptional("Catalog id is required"),
+    heading: headingSchema.optional(),
+    headingAr: arabicSchema("heading", 250).optional(),
+    logo: z.file().mime(IMAGE_MIME_TYPES).nullish(),
+    points: z.array(pointInputSchema).optional(),
+    subCatalogs: z.array(subCatalogInputSchema).optional(),
+  })
+  .check(({ issues, value }) => {
+    const pointsProvided = value?.points !== undefined;
+    const subCatalogsProvided = value?.subCatalogs !== undefined;
+    const pointsCount = value?.points?.length ?? 0;
+    const subCatalogsCount = value?.subCatalogs?.length ?? 0;
+
+    if (
+      pointsProvided &&
+      subCatalogsProvided &&
+      pointsCount === 0 &&
+      subCatalogsCount === 0
+    ) {
+      issues.push({
+        code: "custom",
+        message: "Catalog must have at least one point or sub catalog",
+        input: value,
+      });
+    }
+
+    if (pointsCount > 0 && subCatalogsCount > 0) {
+      issues.push({
+        code: "custom",
+        message: "Catalog cannot have both points and sub catalogs",
+        input: value,
+      });
+    }
+
+    if (pointsProvided && pointsCount === 0 && !subCatalogsProvided) {
+      issues.push({
+        code: "custom",
+        message:
+          "Cannot clear points without providing sub catalogs replacement",
+        input: value,
+      });
+    }
+
+    if (subCatalogsProvided && subCatalogsCount === 0 && !pointsProvided) {
+      issues.push({
+        code: "custom",
+        message:
+          "Cannot clear sub catalogs without providing points replacement",
+        input: value,
+      });
+    }
+  });
 
 export const catalogIdSchema = z.object({
   id: z

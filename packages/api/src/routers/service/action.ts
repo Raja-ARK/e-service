@@ -37,7 +37,7 @@ const create = adminProcedure
     description: "Create a new action",
   })
   .input(stageActionSchema.createActionInputSchema)
-  .output(stageActionSchema.actionResponseSchema)
+  .output(successResponseSchema)
   .handler(async ({ input, context }) => {
     return await actionServices.createAction({ input, context });
   });
@@ -50,7 +50,7 @@ const update = adminProcedure
     description: "Update an action by id",
   })
   .input(stageActionSchema.updateActionInputSchema)
-  .output(stageActionSchema.actionResponseSchema)
+  .output(successResponseSchema)
   .handler(async ({ input, context }) => {
     return await actionServices.updateAction({ input, context });
   });

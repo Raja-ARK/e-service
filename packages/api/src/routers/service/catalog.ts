@@ -38,8 +38,8 @@ const create = adminProcedure
   })
   .input(catalogSchema.createCatalogInputSchema)
   .output(catalogSchema.getCatalogOutputSchema)
-  .handler(async ({ input }) => {
-    return await catalogServices.createCatalog({ input });
+  .handler(async ({ input, context }) => {
+    return await catalogServices.createCatalog({ input, context });
   });
 
 const update = adminProcedure
@@ -51,8 +51,8 @@ const update = adminProcedure
   })
   .input(catalogSchema.updateCatalogInputSchema)
   .output(catalogSchema.getCatalogOutputSchema)
-  .handler(async ({ input }) => {
-    return await catalogServices.updateCatalog({ input });
+  .handler(async ({ input, context }) => {
+    return await catalogServices.updateCatalog({ input, context });
   });
 
 const remove = adminProcedure

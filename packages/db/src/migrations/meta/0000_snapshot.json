@@ -1,5 +1,5 @@
 {
-  "id": "bc91bf80-84a8-4390-992b-b95549117ded",
+  "id": "140d0c3c-df3b-4fef-bb67-c12747f2d978",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2170,6 +2170,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -2209,6 +2221,24 @@
         }
       },
       "foreignKeys": {
+        "catalog_created_by_user_id_fk": {
+          "name": "catalog_created_by_user_id_fk",
+          "tableFrom": "catalog",
+          "tableTo": "user",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "catalog_updated_by_user_id_fk": {
+          "name": "catalog_updated_by_user_id_fk",
+          "tableFrom": "catalog",
+          "tableTo": "user",
+          "columnsFrom": ["updated_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "catalog_service_id_service_id_fk": {
           "name": "catalog_service_id_service_id_fk",
           "tableFrom": "catalog",
@@ -2531,6 +2561,18 @@
           "notNull": true,
           "default": true
         },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -2595,6 +2637,24 @@
           "columnsFrom": ["group_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "form_field_created_by_user_id_fk": {
+          "name": "form_field_created_by_user_id_fk",
+          "tableFrom": "form_field",
+          "tableTo": "user",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "form_field_updated_by_user_id_fk": {
+          "name": "form_field_updated_by_user_id_fk",
+          "tableFrom": "form_field",
+          "tableTo": "user",
+          "columnsFrom": ["updated_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -2716,6 +2776,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -2740,6 +2812,24 @@
           "columnsFrom": ["step_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "form_group_created_by_user_id_fk": {
+          "name": "form_group_created_by_user_id_fk",
+          "tableFrom": "form_group",
+          "tableTo": "user",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "form_group_updated_by_user_id_fk": {
+          "name": "form_group_updated_by_user_id_fk",
+          "tableFrom": "form_group",
+          "tableTo": "user",
+          "columnsFrom": ["updated_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -2868,6 +2958,18 @@
           "notNull": true,
           "default": true
         },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -2947,6 +3049,24 @@
           "columnsFrom": ["step_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "form_rule_created_by_user_id_fk": {
+          "name": "form_rule_created_by_user_id_fk",
+          "tableFrom": "form_rule",
+          "tableTo": "user",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "form_rule_updated_by_user_id_fk": {
+          "name": "form_rule_updated_by_user_id_fk",
+          "tableFrom": "form_rule",
+          "tableTo": "user",
+          "columnsFrom": ["updated_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -3048,6 +3168,18 @@
           "notNull": false,
           "default": "'null'::jsonb"
         },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -3072,6 +3204,24 @@
           "columnsFrom": ["service_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "form_step_created_by_user_id_fk": {
+          "name": "form_step_created_by_user_id_fk",
+          "tableFrom": "form_step",
+          "tableTo": "user",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "form_step_updated_by_user_id_fk": {
+          "name": "form_step_updated_by_user_id_fk",
+          "tableFrom": "form_step",
+          "tableTo": "user",
+          "columnsFrom": ["updated_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -3496,13 +3646,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "category": {
-          "name": "category",
-          "type": "category",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
         "action_variant": {
           "name": "action_variant",
           "type": "stage_action_variant",
@@ -3524,6 +3667,13 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
+        },
+        "order": {
+          "name": "order",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "icon": {
           "name": "icon",
@@ -3551,39 +3701,12 @@
           "notNull": false,
           "default": "'null'::jsonb"
         },
-        "complete_stage_ids": {
-          "name": "complete_stage_ids",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'{}'"
-        },
-        "remove_stage_ids": {
-          "name": "remove_stage_ids",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'{}'"
-        },
-        "skip_stages": {
-          "name": "skip_stages",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'[]'::jsonb"
-        },
         "outcome": {
           "name": "outcome",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
           "default": "'null'::jsonb"
-        },
-        "email_template_id": {
-          "name": "email_template_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_by": {
           "name": "created_by",
@@ -3639,15 +3762,6 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "action_email_template_id_email_template_id_fk": {
-          "name": "action_email_template_id_email_template_id_fk",
-          "tableFrom": "action",
-          "tableTo": "email_template",
-          "columnsFrom": ["email_template_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "action_created_by_user_id_fk": {
           "name": "action_created_by_user_id_fk",
           "tableFrom": "action",
@@ -3664,6 +3778,340 @@
           "columnsFrom": ["updated_by"],
           "columnsTo": ["id"],
           "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.action_complete_stage": {
+      "name": "action_complete_stage",
+      "schema": "",
+      "columns": {
+        "action_id": {
+          "name": "action_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stage_id": {
+          "name": "stage_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "action_complete_stage_action_id_action_id_fk": {
+          "name": "action_complete_stage_action_id_action_id_fk",
+          "tableFrom": "action_complete_stage",
+          "tableTo": "action",
+          "columnsFrom": ["action_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "action_complete_stage_stage_id_stage_id_fk": {
+          "name": "action_complete_stage_stage_id_stage_id_fk",
+          "tableFrom": "action_complete_stage",
+          "tableTo": "stage",
+          "columnsFrom": ["stage_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "action_complete_stage_action_id_stage_id_pk": {
+          "name": "action_complete_stage_action_id_stage_id_pk",
+          "columns": ["action_id", "stage_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.action_email": {
+      "name": "action_email",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "action_id": {
+          "name": "action_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_template_id": {
+          "name": "email_template_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "action_email_action_id_idx": {
+          "name": "action_email_action_id_idx",
+          "columns": [
+            {
+              "expression": "action_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "action_email_action_id_action_id_fk": {
+          "name": "action_email_action_id_action_id_fk",
+          "tableFrom": "action_email",
+          "tableTo": "action",
+          "columnsFrom": ["action_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "action_email_email_template_id_email_template_id_fk": {
+          "name": "action_email_email_template_id_email_template_id_fk",
+          "tableFrom": "action_email",
+          "tableTo": "email_template",
+          "columnsFrom": ["email_template_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.action_email_attachment": {
+      "name": "action_email_attachment",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "action_email_id": {
+          "name": "action_email_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document_template_id": {
+          "name": "document_template_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_url": {
+          "name": "file_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "action_email_attachment_action_email_id_idx": {
+          "name": "action_email_attachment_action_email_id_idx",
+          "columns": [
+            {
+              "expression": "action_email_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "action_email_attachment_action_email_id_action_email_id_fk": {
+          "name": "action_email_attachment_action_email_id_action_email_id_fk",
+          "tableFrom": "action_email_attachment",
+          "tableTo": "action_email",
+          "columnsFrom": ["action_email_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "action_email_attachment_document_template_id_document_template_id_fk": {
+          "name": "action_email_attachment_document_template_id_document_template_id_fk",
+          "tableFrom": "action_email_attachment",
+          "tableTo": "document_template",
+          "columnsFrom": ["document_template_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.action_remove_stage": {
+      "name": "action_remove_stage",
+      "schema": "",
+      "columns": {
+        "action_id": {
+          "name": "action_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stage_id": {
+          "name": "stage_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "action_remove_stage_action_id_action_id_fk": {
+          "name": "action_remove_stage_action_id_action_id_fk",
+          "tableFrom": "action_remove_stage",
+          "tableTo": "action",
+          "columnsFrom": ["action_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "action_remove_stage_stage_id_stage_id_fk": {
+          "name": "action_remove_stage_stage_id_stage_id_fk",
+          "tableFrom": "action_remove_stage",
+          "tableTo": "stage",
+          "columnsFrom": ["stage_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "action_remove_stage_action_id_stage_id_pk": {
+          "name": "action_remove_stage_action_id_stage_id_pk",
+          "columns": ["action_id", "stage_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.action_skip_stage": {
+      "name": "action_skip_stage",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "action_id": {
+          "name": "action_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stage_id": {
+          "name": "stage_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "condition": {
+          "name": "condition",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'null'::jsonb"
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'null'::jsonb"
+        }
+      },
+      "indexes": {
+        "action_skip_stage_action_id_idx": {
+          "name": "action_skip_stage_action_id_idx",
+          "columns": [
+            {
+              "expression": "action_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "action_skip_stage_stage_id_idx": {
+          "name": "action_skip_stage_stage_id_idx",
+          "columns": [
+            {
+              "expression": "stage_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "action_skip_stage_action_id_action_id_fk": {
+          "name": "action_skip_stage_action_id_action_id_fk",
+          "tableFrom": "action_skip_stage",
+          "tableTo": "action",
+          "columnsFrom": ["action_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "action_skip_stage_stage_id_stage_id_fk": {
+          "name": "action_skip_stage_stage_id_stage_id_fk",
+          "tableFrom": "action_skip_stage",
+          "tableTo": "stage",
+          "columnsFrom": ["stage_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

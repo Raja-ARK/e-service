@@ -56,9 +56,9 @@ const createStep = adminProcedure
     description: "Create a new form step",
   })
   .input(formSchema.createStepInputSchema)
-  .output(formSchema.stepResponseSchema)
-  .handler(async ({ input }) => {
-    return await formServices.createStep({ input });
+  .output(successResponseSchema)
+  .handler(async ({ input, context }) => {
+    return await formServices.createStep({ input, context });
   });
 
 const updateStep = adminProcedure
@@ -69,9 +69,9 @@ const updateStep = adminProcedure
     description: "Update a form step by id",
   })
   .input(formSchema.updateStepInputSchema)
-  .output(formSchema.stepResponseSchema)
-  .handler(async ({ input }) => {
-    return await formServices.updateStep({ input });
+  .output(successResponseSchema)
+  .handler(async ({ input, context }) => {
+    return await formServices.updateStep({ input, context });
   });
 
 const removeStep = adminProcedure
@@ -123,9 +123,9 @@ const createGroup = adminProcedure
     description: "Create a new form group",
   })
   .input(formSchema.createGroupInputSchema)
-  .output(formSchema.groupResponseSchema)
-  .handler(async ({ input }) => {
-    return await formServices.createGroup({ input });
+  .output(successResponseSchema)
+  .handler(async ({ input, context }) => {
+    return await formServices.createGroup({ input, context });
   });
 
 const updateGroup = adminProcedure
@@ -136,9 +136,9 @@ const updateGroup = adminProcedure
     description: "Update a form group by id",
   })
   .input(formSchema.updateGroupInputSchema)
-  .output(formSchema.groupResponseSchema)
-  .handler(async ({ input }) => {
-    return await formServices.updateGroup({ input });
+  .output(successResponseSchema)
+  .handler(async ({ input, context }) => {
+    return await formServices.updateGroup({ input, context });
   });
 
 const removeGroup = adminProcedure
@@ -190,9 +190,9 @@ const createField = adminProcedure
     description: "Create a new form field",
   })
   .input(formSchema.createFieldInputSchema)
-  .output(formSchema.fieldResponseSchema)
-  .handler(async ({ input }) => {
-    return await formServices.createField({ input });
+  .output(successResponseSchema)
+  .handler(async ({ input, context }) => {
+    return await formServices.createField({ input, context });
   });
 
 const updateField = adminProcedure
@@ -203,9 +203,9 @@ const updateField = adminProcedure
     description: "Update a form field by id",
   })
   .input(formSchema.updateFieldInputSchema)
-  .output(formSchema.fieldResponseSchema)
-  .handler(async ({ input }) => {
-    return await formServices.updateField({ input });
+  .output(successResponseSchema)
+  .handler(async ({ input, context }) => {
+    return await formServices.updateField({ input, context });
   });
 
 const removeField = adminProcedure
@@ -257,9 +257,9 @@ const createRule = adminProcedure
     description: "Create a new form rule",
   })
   .input(formSchema.createRuleInputSchema)
-  .output(formSchema.ruleResponseSchema)
-  .handler(async ({ input }) => {
-    return await formServices.createRule({ input });
+  .output(successResponseSchema)
+  .handler(async ({ input, context }) => {
+    return await formServices.createRule({ input, context });
   });
 
 const updateRule = adminProcedure
@@ -270,9 +270,9 @@ const updateRule = adminProcedure
     description: "Update a form rule by id",
   })
   .input(formSchema.updateRuleInputSchema)
-  .output(formSchema.ruleResponseSchema)
-  .handler(async ({ input }) => {
-    return await formServices.updateRule({ input });
+  .output(successResponseSchema)
+  .handler(async ({ input, context }) => {
+    return await formServices.updateRule({ input, context });
   });
 
 const removeRule = adminProcedure

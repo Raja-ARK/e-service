@@ -9,10 +9,12 @@ import {
   stageActionTypeInternalEnum,
   stageActionVariantEnum,
 } from "@e-service/db/schema/service/stage";
-import { ARABIC_NAME_REGEX } from "@e-service/shared/utils/constant";
+import {
+  ARABIC_NAME_REGEX,
+  IMAGE_MIME_TYPES,
+} from "@e-service/shared/utils/constant";
 import { z } from "zod";
 import {
-  categorySchema,
   filterConditionInputSchema,
   filterConditionSchema,
   logicOperatorSchema,
@@ -31,6 +33,8 @@ const fieldRuleSchema = z.object({
     "nin",
     "gt",
     "lt",
+    "gte",
+    "lte",
     "empty",
     "not_empty",
     "contains",
@@ -40,8 +44,9 @@ const fieldRuleSchema = z.object({
   ]),
   value: z
     .union([z.string(), z.array(z.string()), z.number(), z.boolean()])
-    .optional(),
+    .nullish(),
 });
+
 export const visibilityConditionSchema = z.union([
   z.object({
     logic: logicOperatorSchema,
@@ -49,6 +54,7 @@ export const visibilityConditionSchema = z.union([
   }),
   fieldRuleSchema,
 ]);
+
 const actionAssignmentSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("applicant") }),
   z.object({
@@ -59,13 +65,24 @@ const actionAssignmentSchema = z.discriminatedUnion("type", [
 
 const bilingualValueSchema = z.object({
   en: z.string().trim().nonempty("English value is required"),
-  ar: z.string().trim().nonempty("Arabic value is required"),
+  ar: z
+    .string({
+      error: ({ code }) => {
+        if (code === "invalid_type")
+          return { message: "Arabic value is required" };
+        if (code === "invalid_format")
+          return { message: "Invalid Arabic value" };
+      },
+    })
+    .trim()
+    .nonempty("Arabic value is required")
+    .regex(ARABIC_NAME_REGEX, "Invalid Arabic value"),
 });
 
 const actionOutcomeSchema = z.object({
-  requestStatus: bilingualValueSchema.optional(),
-  paymentStatus: bilingualValueSchema.optional(),
-  assignment: actionAssignmentSchema.optional(),
+  requestStatus: bilingualValueSchema.nullish(),
+  paymentStatus: bilingualValueSchema.nullish(),
+  assignment: actionAssignmentSchema.nullish(),
 });
 
 const actionConditionSchema = z.object({
@@ -74,10 +91,49 @@ const actionConditionSchema = z.object({
   operator: z.enum(["AND", "OR"]).optional(),
 });
 
-const skipStageSchema = z.object({
-  stageId: z.string().trim().nonempty("Stage id is required"),
-  condition: visibilityConditionSchema.optional().nullish(),
-  outcome: actionOutcomeSchema.optional().nullish(),
+const stageIdField = z.uuid({
+  error: ({ code }) => {
+    if (code === "invalid_type") return { message: "Stage id is required" };
+    if (code === "invalid_format") return { message: "Invalid stage id" };
+  },
+});
+
+// Schema for a single skip-stage entry (maps to actionSkipStage table)
+export const skipStageInputSchema = z.object({
+  stageId: stageIdField,
+  condition: visibilityConditionSchema.nullish(),
+  outcome: actionOutcomeSchema.nullish(),
+});
+
+// Schema for an attachment on an action email
+export const actionEmailAttachmentInputSchema = z
+  .object({
+    documentTemplateId: z
+      .uuid({
+        error: ({ code }) => {
+          if (code === "invalid_format")
+            return { message: "Invalid document template id" };
+        },
+      })
+      .nullish(),
+    fileUrl: z.url("Invalid attachment URL").nullish(),
+  })
+  .refine((v) => (v.documentTemplateId != null) !== (v.fileUrl != null), {
+    message:
+      "Attachment must have exactly one of a document template or a file URL",
+  });
+
+// Schema for a single email entry on an action (maps to actionEmail + actionEmailAttachment tables)
+export const actionEmailInputSchema = z.object({
+  emailTemplateId: z.uuid({
+    error: ({ code }) => {
+      if (code === "invalid_type")
+        return { message: "Email template id is required" };
+      if (code === "invalid_format")
+        return { message: "Invalid email template id" };
+    },
+  }),
+  attachments: z.array(actionEmailAttachmentInputSchema).default([]),
 });
 
 const actionNameArSchema = z
@@ -92,33 +148,8 @@ const actionNameArSchema = z
   })
   .trim()
   .nonempty("Arabic action name is required")
-  .check(({ issues, value }) => {
-    if (value && value?.trim() !== "" && !ARABIC_NAME_REGEX.test(value)) {
-      issues.push({
-        code: "custom",
-        message: "Invalid Arabic action name",
-        input: value,
-      });
-      return;
-    }
-
-    if (value.length < 2) {
-      issues.push({
-        code: "custom",
-        message: "Arabic action name must be at least 2 characters long",
-        input: value,
-      });
-      return;
-    }
-    if (value.length > 250) {
-      issues.push({
-        code: "custom",
-        message: "Arabic action name must be less than 250 characters long",
-        input: value,
-      });
-      return;
-    }
-  });
+  .regex(ARABIC_NAME_REGEX, "Invalid Arabic action name")
+  .max(250, "Arabic action name must be less than 250 characters long");
 
 export const actionVariantSchema = z.enum(stageActionVariantEnum.enumValues);
 
@@ -131,14 +162,7 @@ export const actionTypeInternalSchema = z.enum(
 );
 
 export const createActionInputSchema = createInsertSchema(action, {
-  stageId: z
-    .string({
-      error: ({ code }) => {
-        if (code === "invalid_type") return { message: "Stage id is required" };
-      },
-    })
-    .trim()
-    .nonempty("Stage id is required"),
+  stageId: stageIdField.trim().nonempty("Stage id is required"),
   actionName: z
     .string({
       error: ({ code }) => {
@@ -150,29 +174,36 @@ export const createActionInputSchema = createInsertSchema(action, {
     .min(2, "Action name must be at least 2 characters")
     .max(250, "Action name must be less than 250 characters"),
   actionNameAr: actionNameArSchema,
-  category: categorySchema,
   actionVariant: actionVariantSchema.default("primary"),
   typeExternal: actionTypeExternalSchema.nullish(),
   typeInternal: actionTypeInternalSchema.nullish(),
   showCondition: actionConditionSchema.nullish(),
   outcome: actionOutcomeSchema.nullish(),
-  skipStages: z.array(skipStageSchema).nullish().default([]),
-  completeStageIds: z.array(z.string()).nullish().default([]),
-  removeStageIds: z.array(z.string()).nullish().default([]),
-}).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  createdBy: true,
-  updatedBy: true,
-});
+  order: z.number().int().gte(0, "Order must be greater than 0").default(0),
+  icon: z.file().mime(["image/svg+xml"]).nullish(),
+  modalIcon: z.file().mime(IMAGE_MIME_TYPES).nullish(),
+})
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    createdBy: true,
+    updatedBy: true,
+  })
+  .extend({
+    completeStageIds: z.array(stageIdField).default([]),
+    removeStageIds: z.array(stageIdField).default([]),
+    skipStages: z.array(skipStageInputSchema).default([]),
+    emails: z.array(actionEmailInputSchema).default([]),
+  });
 
 export const updateActionInputSchema = createUpdateSchema(action, {
   id: z
-    .string({
+    .uuid({
       error: ({ code }) => {
         if (code === "invalid_type")
           return { message: "Action id is required" };
+        if (code === "invalid_format") return { message: "Invalid action id" };
       },
     })
     .trim()
@@ -184,22 +215,28 @@ export const updateActionInputSchema = createUpdateSchema(action, {
     .max(250, "Action name must be less than 250 characters")
     .optional(),
   actionNameAr: actionNameArSchema.optional(),
-  category: categorySchema.optional(),
   actionVariant: actionVariantSchema.optional().default("primary"),
   typeExternal: actionTypeExternalSchema.nullish(),
   typeInternal: actionTypeInternalSchema.nullish(),
   showCondition: actionConditionSchema.nullish(),
   outcome: actionOutcomeSchema.nullish(),
-  skipStages: z.array(skipStageSchema).nullish().default([]),
-  completeStageIds: z.array(z.string()).nullish().default([]),
-  removeStageIds: z.array(z.string()).nullish().default([]),
-}).omit({
-  createdAt: true,
-  updatedAt: true,
-  createdBy: true,
-  updatedBy: true,
-  stageId: true,
-});
+  order: z.number().int().gte(0, "Order must be greater than 0").optional(),
+  icon: z.file().mime(["image/svg+xml"]).nullish(),
+  modalIcon: z.file().mime(IMAGE_MIME_TYPES).nullish(),
+})
+  .omit({
+    createdAt: true,
+    updatedAt: true,
+    createdBy: true,
+    updatedBy: true,
+    stageId: true,
+  })
+  .extend({
+    completeStageIds: z.array(stageIdField).optional(),
+    removeStageIds: z.array(stageIdField).optional(),
+    skipStages: z.array(skipStageInputSchema).optional(),
+    emails: z.array(actionEmailInputSchema).optional(),
+  });
 
 export const actionIdSchema = z.object({
   id: z
@@ -216,7 +253,6 @@ export const actionIdSchema = z.object({
 export const ACTION_SORT_FIELDS = [
   "actionName",
   "actionNameAr",
-  "category",
   "actionVariant",
   "disabled",
   "createdAt",
@@ -237,7 +273,6 @@ export const actionFilterSchema = z.object({
   stageId: z.union([z.string(), filterConditionSchema]).optional(),
   actionName: z.union([z.string(), filterConditionSchema]).optional(),
   actionNameAr: z.union([z.string(), filterConditionSchema]).optional(),
-  category: z.union([categorySchema, filterConditionSchema]).optional(),
   disabled: z.union([z.boolean(), filterConditionSchema]).optional(),
 });
 
@@ -248,6 +283,37 @@ export const listActionsInputSchema = paginationQuerySchema.extend({
   withoutPagination: z.boolean().optional().default(false),
 });
 
+const stageRefSchema = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  titleAr: z.string(),
+});
+
+const actionCompleteStageOutputSchema = z.object({
+  stage: stageRefSchema,
+});
+
+const actionRemoveStageOutputSchema = z.object({
+  stage: stageRefSchema,
+});
+
+const actionSkipStageOutputSchema = z.object({
+  stageId: z.uuid(),
+  condition: visibilityConditionSchema.nullable(),
+  outcome: actionOutcomeSchema.nullable(),
+  stage: stageRefSchema,
+});
+
+const actionEmailAttachmentOutputSchema = z.object({
+  documentTemplateId: z.uuid().nullable(),
+  fileUrl: z.string().nullable(),
+});
+
+const actionEmailOutputSchema = z.object({
+  emailTemplateId: z.uuid(),
+  attachments: z.array(actionEmailAttachmentOutputSchema),
+});
+
 const actionSchema = createSelectSchema(action).omit({
   createdBy: true,
   updatedBy: true,
@@ -256,8 +322,15 @@ const actionSchema = createSelectSchema(action).omit({
   stageId: true,
 });
 
+const actionWithRelationsSchema = actionSchema.extend({
+  completeStages: z.array(actionCompleteStageOutputSchema),
+  removeStages: z.array(actionRemoveStageOutputSchema),
+  skipStages: z.array(actionSkipStageOutputSchema),
+  emails: z.array(actionEmailOutputSchema),
+});
+
 export const actionResponseSchema = z.object({
-  action: actionSchema,
+  action: actionWithRelationsSchema,
 });
 
 export const listActionsOutputSchema = paginatedResponseSchema(actionSchema);

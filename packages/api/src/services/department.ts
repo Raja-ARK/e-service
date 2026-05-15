@@ -1,6 +1,7 @@
 import { db } from "@e-service/db";
 import { and, count, eq, or } from "@e-service/db/drizzle/orm";
 import { department } from "@e-service/db/schema/department";
+import { service } from "@e-service/db/schema/service/service";
 import { tryCatch } from "@e-service/shared/utils/try-catch";
 import { deleteFile, uploadFile } from "@e-service/storage";
 import { generateKey } from "@e-service/storage/utils";
@@ -146,14 +147,13 @@ export const createDepartment = async ({
   let key = logo ? generateKey(logo, "department") : undefined;
 
   if (logo && key) {
-    const { data, error } = await tryCatch(
+    const { data } = await tryCatch(
       uploadFile(key, logo, {
         contentType: logo.type || undefined,
         metadata: { originalName: logo.name },
       }),
     );
     key = data?.key ?? undefined;
-    console.log(data, error);
   }
 
   const { data: created, error } = await tryCatch(
@@ -171,10 +171,7 @@ export const createDepartment = async ({
   const newDepartment = created?.[0];
 
   if (error || !newDepartment) {
-    if (key)
-      await deleteFile(key).catch((err) => {
-        console.log(err);
-      });
+    if (key) await deleteFile(key).catch(() => {});
 
     const { isUniqueConstraintViolation } = isConstrainViolation(error);
     const uniqueHit = !!error && isUniqueConstraintViolation;
@@ -219,14 +216,13 @@ export const updateDepartment = async ({
       logo === null ? null : logo ? generateKey(logo, "department") : undefined;
 
     if (logo && newKey) {
-      const { data, error } = await tryCatch(
+      const { data } = await tryCatch(
         uploadFile(newKey, logo, {
           contentType: logo.type || undefined,
           metadata: { originalName: logo.name },
         }),
       );
       newKey = data?.key ?? undefined;
-      console.log(data, error);
     }
   }
 
@@ -278,16 +274,40 @@ export const deleteDepartment = async ({
 }: {
   input: DepartmentIdInput;
 }) => {
-  const [deleted] = await db
-    .delete(department)
-    .where(eq(department.id, input.id))
-    .returning();
+  const { data: deleted, error } = await tryCatch(
+    db.transaction(async (tx) => {
+      const [serviceCount] = await tx
+        .select({ value: count() })
+        .from(service)
+        .where(eq(service.departmentId, input.id));
 
-  if (deleted?.logo) {
+      if ((serviceCount?.value ?? 0) > 0)
+        throw new ORPCError("CONFLICT", {
+          message: "Cannot delete department with existing services",
+        });
+
+      const [row] = await tx
+        .delete(department)
+        .where(eq(department.id, input.id))
+        .returning();
+
+      if (!row)
+        throw new ORPCError("NOT_FOUND", { message: "Department not found" });
+
+      return row;
+    }),
+  );
+
+  if (error || !deleted) {
+    if (error instanceof ORPCError) throw error;
+    throw new ORPCError("BAD_REQUEST", {
+      message: error?.message ?? "Failed to delete department",
+    });
+  }
+
+  if (deleted.logo) {
     await deleteFile(deleted.logo).catch(() => {});
   }
 
-  if (!deleted)
-    throw new ORPCError("NOT_FOUND", { message: "Department not found" });
   return { success: true, message: "Department deleted" };
 };

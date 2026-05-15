@@ -13,8 +13,9 @@ import {
   formTypeEnum,
   ruleTriggerEnum,
   stepTypeEnum,
+  type ValueExpression,
 } from "@e-service/db/schema/service/form";
-import { IMAGE_MIME_TYPES } from "@e-service/shared/utils/constant";
+import { ARABIC_NAME_REGEX } from "@e-service/shared/utils/constant";
 import { z } from "zod";
 import {
   filterConditionInputSchema,
@@ -28,7 +29,7 @@ import { visibilityConditionSchema } from "./action";
 
 const idString = (label: string) =>
   z
-    .string({
+    .uuid({
       error: ({ code }) => {
         if (code === "invalid_type") return { message: `${label} is required` };
       },
@@ -36,9 +37,23 @@ const idString = (label: string) =>
     .trim()
     .nonempty(`${label} is required`);
 
-const iconFileSchema = z.file().mime(IMAGE_MIME_TYPES).nullish();
+const arabicString = (label: string) =>
+  z
+    .string({
+      error: ({ code }) => {
+        if (code === "invalid_type") return { message: `${label} is required` };
+      },
+    })
+    .trim()
+    .nonempty(`${label} is required`)
+    .regex(ARABIC_NAME_REGEX, "Invalid Arabic name");
 
-const stageIdsSchema = z.array(z.string()).optional().default([]);
+const iconFileSchema = z.file().mime(["image/svg+xml"]).nullish();
+
+const stageIdsSchema = z
+  .array(z.uuid().trim().nonempty("Stage id is required"))
+  .optional()
+  .default([]);
 
 export const formTypeSchema = z.enum(formTypeEnum.enumValues);
 export const stepTypeSchema = z.enum(stepTypeEnum.enumValues);
@@ -58,6 +73,9 @@ const fieldDefaultValueSchema = z.union([
   z.tuple([z.string(), z.string()]),
   z.array(z.string()),
   z.array(z.number()),
+  z.date(),
+  z.array(z.date()),
+  z.tuple([z.date(), z.date()]),
 ]);
 
 export const fieldConfigSchema = z.object({
@@ -72,8 +90,6 @@ export const fieldConfigSchema = z.object({
   fieldAlignment: fieldAlignmentSchema,
   description: z.string().nullable(),
   descriptionAr: z.string().nullable(),
-  prefixIcon: z.string().nullable(),
-  suffixIcon: z.string().nullable(),
   maxFileSize: z.number(),
   allowedFileTypes: z.array(z.string()),
   maxFileCount: z.number(),
@@ -85,30 +101,140 @@ export const fieldConfigSchema = z.object({
 
 // --- Rule action / value expression (jsonb) ---
 
-const ruleActionSchema: z.ZodType = z.lazy(() =>
+const fieldUUIDIdSchema = z.uuid().trim().nonempty("Field id is required");
+
+const dateTimeUnitSchema = z.enum([
+  "second",
+  "minute",
+  "hour",
+  "day",
+  "week",
+  "month",
+  "year",
+]);
+
+const valueExpressionStaticValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+]);
+
+const valueExpressionSchema: z.ZodType<ValueExpression> = z.lazy(() =>
   z.discriminatedUnion("type", [
     z.object({
-      type: z.literal("set_value"),
-      fieldId: z.string(),
-      value: valueExpressionSchema,
+      type: z.literal("static"),
+      value: valueExpressionStaticValueSchema,
     }),
-    z.object({ type: z.literal("clear"), fieldId: z.string() }),
-    z.object({ type: z.literal("show"), fieldId: z.string() }),
-    z.object({ type: z.literal("hide"), fieldId: z.string() }),
-    z.object({ type: z.literal("enable"), fieldId: z.string() }),
-    z.object({ type: z.literal("disable"), fieldId: z.string() }),
-    z.object({ type: z.literal("set_required"), fieldId: z.string() }),
-    z.object({ type: z.literal("set_optional"), fieldId: z.string() }),
     z.object({
-      type: z.literal("validate"),
-      fieldId: z.string(),
-      message: z.string(),
-      messageAr: z.string(),
+      type: z.literal("field"),
+      fieldId: fieldUUIDIdSchema,
+    }),
+    z.object({ type: z.literal("now") }),
+    z.object({ type: z.literal("null") }),
+    z.object({
+      type: z.literal("date_add"),
+      source: valueExpressionSchema,
+      amount: valueExpressionSchema,
+      unit: dateTimeUnitSchema,
+    }),
+    z.object({
+      type: z.literal("date_sub"),
+      source: valueExpressionSchema,
+      amount: valueExpressionSchema,
+      unit: dateTimeUnitSchema,
+    }),
+    z.object({
+      type: z.literal("date_diff"),
+      from: valueExpressionSchema,
+      to: valueExpressionSchema,
+      unit: dateTimeUnitSchema,
+    }),
+    z.object({
+      type: z.enum(["add", "subtract", "multiply", "divide", "mod"]),
+      left: valueExpressionSchema,
+      right: valueExpressionSchema,
+    }),
+    z.object({
+      type: z.enum(["abs", "ceil", "floor", "round"]),
+      operand: valueExpressionSchema,
+    }),
+    z.object({
+      type: z.literal("concat"),
+      parts: z.array(valueExpressionSchema),
+      separator: z.string().optional(),
+    }),
+    z.object({
+      type: z.enum(["upper", "lower", "trim"]),
+      operand: valueExpressionSchema,
+    }),
+    z.object({
+      type: z.literal("slice"),
+      operand: valueExpressionSchema,
+      start: z.number(),
+      end: z.number().optional(),
+    }),
+    z.object({
+      type: z.literal("array"),
+      items: z.array(valueExpressionSchema),
+    }),
+    z.object({
+      type: z.literal("object"),
+      properties: z.record(z.string(), valueExpressionSchema),
+    }),
+    z.object({
+      type: z.enum(["and", "or"]),
+      operands: z.array(valueExpressionSchema),
+    }),
+    z.object({
+      type: z.literal("not"),
+      operand: valueExpressionSchema,
+    }),
+    z.object({
+      type: z.literal("coalesce"),
+      operands: z.array(valueExpressionSchema),
+    }),
+    z.object({
+      type: z.literal("if"),
+      condition: visibilityConditionSchema,
+      // biome-ignore lint/suspicious/noThenProperty: matches ValueExpression DSL shape
+      then: valueExpressionSchema,
+      else: valueExpressionSchema,
+    }),
+    z.object({
+      type: z.literal("switch"),
+      fieldId: fieldUUIDIdSchema,
+      cases: z.array(
+        z.object({
+          match: z.unknown(),
+          value: valueExpressionSchema,
+        }),
+      ),
+      default: valueExpressionSchema,
     }),
   ]),
 );
 
-const valueExpressionSchema: z.ZodType = z.lazy(() => z.any());
+const ruleActionSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("set_value"),
+    fieldId: fieldUUIDIdSchema,
+    value: valueExpressionSchema,
+  }),
+  z.object({ type: z.literal("clear"), fieldId: fieldUUIDIdSchema }),
+  z.object({ type: z.literal("show"), fieldId: fieldUUIDIdSchema }),
+  z.object({ type: z.literal("hide"), fieldId: fieldUUIDIdSchema }),
+  z.object({ type: z.literal("enable"), fieldId: fieldUUIDIdSchema }),
+  z.object({ type: z.literal("disable"), fieldId: fieldUUIDIdSchema }),
+  z.object({ type: z.literal("set_required"), fieldId: fieldUUIDIdSchema }),
+  z.object({ type: z.literal("set_optional"), fieldId: fieldUUIDIdSchema }),
+  z.object({
+    type: z.literal("validate"),
+    fieldId: fieldUUIDIdSchema,
+    message: z.string(),
+    messageAr: z.string(),
+  }),
+]);
 
 // --- Form ---
 
@@ -122,7 +248,7 @@ const stepBase = createInsertSchema(formStep, {
   serviceId: idString("Service id"),
   code: z.string().trim().min(1, "Code is required"),
   title: z.string().trim().min(1, "Title is required"),
-  titleAr: z.string().trim().min(1, "Arabic title is required"),
+  titleAr: arabicString("Arabic title"),
   order: z.number().int().min(0).default(0),
   hideFor: portalTypeSchema.nullish(),
   color: z.string().nullish(),
@@ -135,6 +261,8 @@ const stepBase = createInsertSchema(formStep, {
   icon: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const createStepInputSchema = stepBase.extend({
@@ -146,7 +274,7 @@ export const updateStepInputSchema = createUpdateSchema(formStep, {
   id: idString("Step id"),
   code: z.string().trim().min(1).optional(),
   title: z.string().trim().min(1).optional(),
-  titleAr: z.string().trim().min(1).optional(),
+  titleAr: arabicString("Arabic title").optional(),
   order: z.number().int().min(0).optional(),
   hideFor: portalTypeSchema.nullish(),
   color: z.string().nullish(),
@@ -155,10 +283,19 @@ export const updateStepInputSchema = createUpdateSchema(formStep, {
   templateType: formTemplateTypeSchema.optional(),
   visibilityCondition: visibilityConditionSchema.nullish(),
 })
-  .omit({ icon: true, createdAt: true, updatedAt: true, serviceId: true })
+  .omit({
+    icon: true,
+    createdAt: true,
+    updatedAt: true,
+    serviceId: true,
+    createdBy: true,
+    updatedBy: true,
+  })
   .extend({
     icon: iconFileSchema,
-    stageIds: z.array(z.string()).optional(),
+    stageIds: z
+      .array(z.uuid().trim().nonempty("Stage id is required"))
+      .optional(),
   });
 
 export const stepIdSchema = z.object({ id: idString("Step id") });
@@ -202,7 +339,7 @@ export const listStepsInputSchema = paginationQuerySchema.extend({
 const groupBase = createInsertSchema(formGroup, {
   stepId: idString("Step id"),
   label: z.string().trim().min(1, "Label is required"),
-  labelAr: z.string().trim().min(1, "Arabic label is required"),
+  labelAr: arabicString("Arabic label"),
   order: z.number().int().min(0).default(0),
   hideFor: portalTypeSchema.nullish(),
   templateType: formTemplateTypeSchema.default("normal"),
@@ -212,6 +349,8 @@ const groupBase = createInsertSchema(formGroup, {
   icon: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const createGroupInputSchema = groupBase.extend({
@@ -222,16 +361,25 @@ export const createGroupInputSchema = groupBase.extend({
 export const updateGroupInputSchema = createUpdateSchema(formGroup, {
   id: idString("Group id"),
   label: z.string().trim().min(1).optional(),
-  labelAr: z.string().trim().min(1).optional(),
+  labelAr: arabicString("Arabic label").optional(),
   order: z.number().int().min(0).optional(),
   hideFor: portalTypeSchema.nullish(),
   templateType: formTemplateTypeSchema.optional(),
   visibilityCondition: visibilityConditionSchema.nullish(),
 })
-  .omit({ icon: true, createdAt: true, updatedAt: true, stepId: true })
+  .omit({
+    icon: true,
+    createdAt: true,
+    updatedAt: true,
+    stepId: true,
+    createdBy: true,
+    updatedBy: true,
+  })
   .extend({
     icon: iconFileSchema,
-    stageIds: z.array(z.string()).optional(),
+    stageIds: z
+      .array(z.uuid().trim().nonempty("Stage id is required"))
+      .optional(),
   });
 
 export const groupIdSchema = z.object({ id: idString("Group id") });
@@ -271,14 +419,31 @@ export const listGroupsInputSchema = paginationQuerySchema.extend({
 
 const fieldBase = createInsertSchema(formField, {
   code: z.string().trim().min(1, "Code is required"),
-  stepId: z.string().nullish(),
-  groupId: z.string().nullish(),
+  stepId: z
+    .uuid({
+      error: ({ code }) => {
+        if (code === "invalid_type") return { message: "Step id is required" };
+        if (code === "invalid_format") return { message: "Invalid step id" };
+      },
+    })
+    .trim()
+    .nonempty("Step id is required"),
+  groupId: z
+    .uuid({
+      error: ({ code }) => {
+        if (code === "invalid_type") return { message: "Group id is required" };
+        if (code === "invalid_format") return { message: "Invalid group id" };
+      },
+    })
+    .trim()
+    .nonempty("Group id is required")
+    .optional(),
   label: z.string().trim().min(1, "Label is required"),
-  labelAr: z.string().trim().min(1, "Arabic label is required"),
+  labelAr: arabicString("Arabic label"),
   placeholder: z.string().nullish(),
-  placeholderAr: z.string().nullish(),
+  placeholderAr: arabicString("Arabic placeholder").nullish(),
   helperText: z.string().nullish(),
-  helperTextAr: z.string().nullish(),
+  helperTextAr: arabicString("Arabic helper text").nullish(),
   type: fieldTypeSchema,
   order: z.number().int().min(0).default(0),
   visibilityCondition: visibilityConditionSchema.nullish(),
@@ -289,12 +454,14 @@ const fieldBase = createInsertSchema(formField, {
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const createFieldInputSchema = fieldBase
   .extend({
-    prefixIcon: iconFileSchema,
-    suffixIcon: iconFileSchema,
+    prefixIcon: iconFileSchema.nullish(),
+    suffixIcon: iconFileSchema.nullish(),
     stageIds: stageIdsSchema,
   })
   .check(({ issues, value }) => {
@@ -310,26 +477,46 @@ export const createFieldInputSchema = fieldBase
 export const updateFieldInputSchema = createUpdateSchema(formField, {
   id: idString("Field id"),
   code: z.string().trim().min(1).optional(),
-  stepId: z.string().nullish(),
-  groupId: z.string().nullish(),
+  stepId: z
+    .uuid({
+      error: ({ code }) => {
+        if (code === "invalid_type") return { message: "Step id is required" };
+        if (code === "invalid_format") return { message: "Invalid step id" };
+      },
+    })
+    .trim()
+    .nonempty("Step id is required")
+    .optional(),
+  groupId: z
+    .uuid({
+      error: ({ code }) => {
+        if (code === "invalid_type") return { message: "Group id is required" };
+        if (code === "invalid_format") return { message: "Invalid group id" };
+      },
+    })
+    .trim()
+    .nonempty("Group id is required")
+    .optional(),
   label: z.string().trim().min(1).optional(),
-  labelAr: z.string().trim().min(1).optional(),
+  labelAr: arabicString("Arabic label").optional(),
   placeholder: z.string().nullish(),
-  placeholderAr: z.string().nullish(),
+  placeholderAr: arabicString("Arabic placeholder").nullish(),
   helperText: z.string().nullish(),
-  helperTextAr: z.string().nullish(),
+  helperTextAr: arabicString("Arabic helper text").nullish(),
   type: fieldTypeSchema.optional(),
   order: z.number().int().min(0).optional(),
   visibilityCondition: visibilityConditionSchema.nullish(),
   hideFor: portalTypeSchema.nullish(),
-  config: fieldConfigSchema.partial().optional(),
+  config: fieldConfigSchema.optional(),
   canEditInInternal: z.boolean().optional(),
 })
-  .omit({ createdAt: true, updatedAt: true })
+  .omit({ createdAt: true, updatedAt: true, createdBy: true, updatedBy: true })
   .extend({
-    prefixIcon: iconFileSchema,
-    suffixIcon: iconFileSchema,
-    stageIds: z.array(z.string()).optional(),
+    prefixIcon: iconFileSchema.nullish(),
+    suffixIcon: iconFileSchema.nullish(),
+    stageIds: z
+      .array(z.uuid().trim().nonempty("Stage id is required"))
+      .optional(),
   });
 
 export const fieldIdSchema = z.object({ id: idString("Field id") });
@@ -374,33 +561,65 @@ export const createRuleInputSchema = createInsertSchema(formRule, {
   serviceId: idString("Service id"),
   name: z.string().trim().min(1, "Name is required"),
   trigger: ruleTriggerSchema,
-  sourceFieldId: z.string().nullish(),
-  stepId: z.string().nullish(),
+  sourceFieldId: z
+    .uuid()
+    .trim()
+    .nonempty("Source field id is required")
+    .nullish(),
+  stepId: z.uuid().trim().nonempty("Step id is required").nullish(),
   condition: visibilityConditionSchema.nullish(),
   actions: z.array(ruleActionSchema).default([]),
   order: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
-}).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+})
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    createdBy: true,
+    updatedBy: true,
+  })
+  .check(({ issues, value }) => {
+    if (!value.sourceFieldId && !value.stepId) {
+      issues.push({
+        code: "custom",
+        message: "Rule must have a source field or a step",
+        input: value,
+      });
+    }
+  });
 
 export const updateRuleInputSchema = createUpdateSchema(formRule, {
   id: idString("Rule id"),
   name: z.string().trim().min(1).optional(),
   trigger: ruleTriggerSchema.optional(),
-  sourceFieldId: z.string().nullish(),
-  stepId: z.string().nullish(),
+  sourceFieldId: z
+    .uuid()
+    .trim()
+    .nonempty("Source field id is required")
+    .nullish(),
+  stepId: z.uuid().trim().nonempty("Step id is required").nullish(),
   condition: visibilityConditionSchema.nullish(),
   actions: z.array(ruleActionSchema).optional(),
   order: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
-}).omit({
-  createdAt: true,
-  updatedAt: true,
-  serviceId: true,
-});
+})
+  .omit({
+    createdAt: true,
+    updatedAt: true,
+    serviceId: true,
+    createdBy: true,
+    updatedBy: true,
+  })
+  .check(({ issues, value }) => {
+    if (value.sourceFieldId === null && value.stepId === null) {
+      issues.push({
+        code: "custom",
+        message: "Rule must have a source field or a step",
+        input: value,
+      });
+    }
+  });
 
 export const ruleIdSchema = z.object({ id: idString("Rule id") });
 
@@ -444,12 +663,13 @@ const stageRefSchema = z.object({
   id: z.string(),
   title: z.string(),
   titleAr: z.string(),
-  order: z.number(),
 });
 
 const stepBaseOutputSchema = createSelectSchema(formStep).omit({
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const stepOutputSchema = stepBaseOutputSchema.extend({
@@ -459,6 +679,8 @@ export const stepOutputSchema = stepBaseOutputSchema.extend({
 const groupBaseOutputSchema = createSelectSchema(formGroup).omit({
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const groupOutputSchema = groupBaseOutputSchema.extend({
@@ -468,6 +690,8 @@ export const groupOutputSchema = groupBaseOutputSchema.extend({
 const fieldBaseOutputSchema = createSelectSchema(formField).omit({
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const fieldOutputSchema = fieldBaseOutputSchema.extend({
@@ -477,6 +701,8 @@ export const fieldOutputSchema = fieldBaseOutputSchema.extend({
 const ruleBaseOutputSchema = createSelectSchema(formRule).omit({
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const ruleOutputSchema = ruleBaseOutputSchema;
@@ -493,7 +719,6 @@ export const formByServiceOutputSchema = z.object({
   steps: z.array(stepWithChildrenSchema),
   rules: z.array(ruleOutputSchema),
 });
-
 export const stepResponseSchema = z.object({ step: stepOutputSchema });
 export const listStepsOutputSchema = paginatedResponseSchema(stepOutputSchema);
 

@@ -6,11 +6,36 @@ import { cors } from "@elysiajs/cors";
 import { SmartCoercionPlugin } from "@orpc/json-schema";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
-import { ORPCError, onError } from "@orpc/server";
+import { ORPCError, onError, ValidationError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { isAPIError } from "better-auth/api";
 import { Elysia } from "elysia";
+import { ZodError, z } from "zod";
+
+const formatValidationError = (cause: ValidationError) => {
+  const zodError = new ZodError(cause.issues as never);
+  return z.treeifyError(zodError);
+};
+
+const handleError = (error: unknown) => {
+  console.error(error);
+  if (
+    error instanceof ORPCError &&
+    error.code === "BAD_REQUEST" &&
+    error.cause instanceof ValidationError
+  ) {
+    throw new ORPCError("INPUT_VALIDATION_FAILED", {
+      status: 422,
+      message: "Input validation failed",
+      data: formatValidationError(error.cause),
+      cause: error.cause,
+    });
+  }
+  if (isAPIError(error)) {
+    throw new ORPCError("BAD_REQUEST", { message: error.message });
+  }
+};
 
 const rpcHandler = new RPCHandler(appRouter, {
   plugins: [
@@ -18,14 +43,7 @@ const rpcHandler = new RPCHandler(appRouter, {
       schemaConverters: [new ZodToJsonSchemaConverter()],
     }),
   ],
-  interceptors: [
-    onError((error) => {
-      console.error(error);
-      if (isAPIError(error)) {
-        throw new ORPCError("BAD_REQUEST", { message: error.message });
-      }
-    }),
-  ],
+  interceptors: [onError(handleError)],
 });
 const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [
@@ -55,14 +73,7 @@ const apiHandler = new OpenAPIHandler(appRouter, {
       schemaConverters: [new ZodToJsonSchemaConverter()],
     }),
   ],
-  interceptors: [
-    onError((error) => {
-      console.error(error);
-      if (isAPIError(error)) {
-        throw new ORPCError("BAD_REQUEST", { message: error.message });
-      }
-    }),
-  ],
+  interceptors: [onError(handleError)],
 });
 
 // @ts-expect-error

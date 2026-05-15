@@ -276,6 +276,8 @@ CREATE TABLE "catalog" (
 	"heading" text NOT NULL,
 	"heading_ar" text NOT NULL,
 	"logo" text,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"service_id" uuid NOT NULL
@@ -319,6 +321,8 @@ CREATE TABLE "form_field" (
 	"hide_for" "portal_type",
 	"config" jsonb DEFAULT '{"required":false,"disabled":false,"minLength":null,"maxLength":null,"min":null,"max":null,"defaultValue":null,"allowedFileTypes":["image/jpeg","image/png","image/gif","image/webp"],"maxFileSize":10485760,"maxFileCount":1,"fieldWidth":"100%","fieldAlignment":"left","description":null,"descriptionAr":null,"prefixIcon":null,"suffixIcon":null,"pattern":null,"patternMessage":null,"patternMessageAr":null,"multiple":null}'::jsonb,
 	"can_edit_in_internal" boolean DEFAULT true NOT NULL,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -339,6 +343,8 @@ CREATE TABLE "form_group" (
 	"icon" text,
 	"template_type" "form_template_type" DEFAULT 'normal' NOT NULL,
 	"visibility_condition" jsonb,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -360,6 +366,8 @@ CREATE TABLE "form_rule" (
 	"actions" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"order" smallint DEFAULT 0 NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -378,6 +386,8 @@ CREATE TABLE "form_step" (
 	"step_type" "step_type" DEFAULT 'normal' NOT NULL,
 	"template_type" "form_template_type" DEFAULT 'normal' NOT NULL,
 	"visibility_condition" jsonb DEFAULT 'null'::jsonb,
+	"created_by" text,
+	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -432,23 +442,52 @@ CREATE TABLE "action" (
 	"stage_id" uuid NOT NULL,
 	"action_name" text NOT NULL,
 	"action_name_ar" text NOT NULL,
-	"category" "category" NOT NULL,
 	"action_variant" "stage_action_variant" DEFAULT 'primary' NOT NULL,
 	"type_external" "stage_action_type_external",
 	"type_internal" "stage_action_type_internal",
+	"order" smallint DEFAULT 0 NOT NULL,
 	"icon" text,
 	"modal_icon" text,
 	"disabled" boolean DEFAULT false NOT NULL,
 	"show_condition" jsonb DEFAULT 'null'::jsonb,
-	"complete_stage_ids" text[] DEFAULT '{}',
-	"remove_stage_ids" text[] DEFAULT '{}',
-	"skip_stages" jsonb DEFAULT '[]'::jsonb,
 	"outcome" jsonb DEFAULT 'null'::jsonb,
-	"email_template_id" uuid,
 	"created_by" text,
 	"updated_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "action_complete_stage" (
+	"action_id" uuid NOT NULL,
+	"stage_id" uuid NOT NULL,
+	CONSTRAINT "action_complete_stage_action_id_stage_id_pk" PRIMARY KEY("action_id","stage_id")
+);
+--> statement-breakpoint
+CREATE TABLE "action_email" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"action_id" uuid NOT NULL,
+	"email_template_id" uuid NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "action_email_attachment" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"action_email_id" uuid NOT NULL,
+	"document_template_id" uuid,
+	"file_url" text
+);
+--> statement-breakpoint
+CREATE TABLE "action_remove_stage" (
+	"action_id" uuid NOT NULL,
+	"stage_id" uuid NOT NULL,
+	CONSTRAINT "action_remove_stage_action_id_stage_id_pk" PRIMARY KEY("action_id","stage_id")
+);
+--> statement-breakpoint
+CREATE TABLE "action_skip_stage" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"action_id" uuid NOT NULL,
+	"stage_id" uuid NOT NULL,
+	"condition" jsonb DEFAULT 'null'::jsonb,
+	"outcome" jsonb DEFAULT 'null'::jsonb
 );
 --> statement-breakpoint
 CREATE TABLE "stage" (
@@ -492,21 +531,31 @@ ALTER TABLE "request_history" ADD CONSTRAINT "request_history_request_id_request
 ALTER TABLE "request_history" ADD CONSTRAINT "request_history_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request_history" ADD CONSTRAINT "request_history_action_id_action_id_fk" FOREIGN KEY ("action_id") REFERENCES "public"."action"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request_history" ADD CONSTRAINT "request_history_performed_by_user_id_fk" FOREIGN KEY ("performed_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "catalog" ADD CONSTRAINT "catalog_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "catalog" ADD CONSTRAINT "catalog_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "catalog" ADD CONSTRAINT "catalog_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "catalog_point" ADD CONSTRAINT "catalog_point_catalog_id_catalog_id_fk" FOREIGN KEY ("catalog_id") REFERENCES "public"."catalog"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "catalog_point" ADD CONSTRAINT "catalog_point_sub_catalog_id_catalog_sub_catalog_id_fk" FOREIGN KEY ("sub_catalog_id") REFERENCES "public"."catalog_sub_catalog"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "catalog_sub_catalog" ADD CONSTRAINT "catalog_sub_catalog_catalog_id_catalog_id_fk" FOREIGN KEY ("catalog_id") REFERENCES "public"."catalog"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_field" ADD CONSTRAINT "form_field_step_id_form_step_id_fk" FOREIGN KEY ("step_id") REFERENCES "public"."form_step"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_field" ADD CONSTRAINT "form_field_group_id_form_group_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."form_group"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "form_field" ADD CONSTRAINT "form_field_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "form_field" ADD CONSTRAINT "form_field_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_field_stage" ADD CONSTRAINT "form_field_stage_field_id_form_field_id_fk" FOREIGN KEY ("field_id") REFERENCES "public"."form_field"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_field_stage" ADD CONSTRAINT "form_field_stage_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_group" ADD CONSTRAINT "form_group_step_id_form_step_id_fk" FOREIGN KEY ("step_id") REFERENCES "public"."form_step"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "form_group" ADD CONSTRAINT "form_group_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "form_group" ADD CONSTRAINT "form_group_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_group_stage" ADD CONSTRAINT "form_group_stage_group_id_form_group_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."form_group"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_group_stage" ADD CONSTRAINT "form_group_stage_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_rule" ADD CONSTRAINT "form_rule_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_rule" ADD CONSTRAINT "form_rule_source_field_id_form_field_id_fk" FOREIGN KEY ("source_field_id") REFERENCES "public"."form_field"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_rule" ADD CONSTRAINT "form_rule_step_id_form_step_id_fk" FOREIGN KEY ("step_id") REFERENCES "public"."form_step"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "form_rule" ADD CONSTRAINT "form_rule_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "form_rule" ADD CONSTRAINT "form_rule_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_step" ADD CONSTRAINT "form_step_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "form_step" ADD CONSTRAINT "form_step_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "form_step" ADD CONSTRAINT "form_step_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_step_stage" ADD CONSTRAINT "form_step_stage_step_id_form_step_id_fk" FOREIGN KEY ("step_id") REFERENCES "public"."form_step"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_step_stage" ADD CONSTRAINT "form_step_stage_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "prerequisite" ADD CONSTRAINT "prerequisite_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -517,9 +566,18 @@ ALTER TABLE "service" ADD CONSTRAINT "service_output_document_id_document_templa
 ALTER TABLE "service" ADD CONSTRAINT "service_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "service" ADD CONSTRAINT "service_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "action" ADD CONSTRAINT "action_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "action" ADD CONSTRAINT "action_email_template_id_email_template_id_fk" FOREIGN KEY ("email_template_id") REFERENCES "public"."email_template"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "action" ADD CONSTRAINT "action_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "action" ADD CONSTRAINT "action_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action_complete_stage" ADD CONSTRAINT "action_complete_stage_action_id_action_id_fk" FOREIGN KEY ("action_id") REFERENCES "public"."action"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action_complete_stage" ADD CONSTRAINT "action_complete_stage_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action_email" ADD CONSTRAINT "action_email_action_id_action_id_fk" FOREIGN KEY ("action_id") REFERENCES "public"."action"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action_email" ADD CONSTRAINT "action_email_email_template_id_email_template_id_fk" FOREIGN KEY ("email_template_id") REFERENCES "public"."email_template"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action_email_attachment" ADD CONSTRAINT "action_email_attachment_action_email_id_action_email_id_fk" FOREIGN KEY ("action_email_id") REFERENCES "public"."action_email"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action_email_attachment" ADD CONSTRAINT "action_email_attachment_document_template_id_document_template_id_fk" FOREIGN KEY ("document_template_id") REFERENCES "public"."document_template"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action_remove_stage" ADD CONSTRAINT "action_remove_stage_action_id_action_id_fk" FOREIGN KEY ("action_id") REFERENCES "public"."action"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action_remove_stage" ADD CONSTRAINT "action_remove_stage_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action_skip_stage" ADD CONSTRAINT "action_skip_stage_action_id_action_id_fk" FOREIGN KEY ("action_id") REFERENCES "public"."action"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action_skip_stage" ADD CONSTRAINT "action_skip_stage_stage_id_stage_id_fk" FOREIGN KEY ("stage_id") REFERENCES "public"."stage"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stage" ADD CONSTRAINT "stage_service_id_service_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."service"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stage" ADD CONSTRAINT "stage_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stage" ADD CONSTRAINT "stage_updated_by_user_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -555,5 +613,9 @@ CREATE INDEX "form_rule_service_order_idx" ON "form_rule" USING btree ("service_
 CREATE INDEX "prerequisite_service_id_idx" ON "prerequisite" USING btree ("service_id");--> statement-breakpoint
 CREATE INDEX "service_department_id_idx" ON "service" USING btree ("department_id");--> statement-breakpoint
 CREATE INDEX "action_stage_id_idx" ON "action" USING btree ("stage_id");--> statement-breakpoint
+CREATE INDEX "action_email_action_id_idx" ON "action_email" USING btree ("action_id");--> statement-breakpoint
+CREATE INDEX "action_email_attachment_action_email_id_idx" ON "action_email_attachment" USING btree ("action_email_id");--> statement-breakpoint
+CREATE INDEX "action_skip_stage_action_id_idx" ON "action_skip_stage" USING btree ("action_id");--> statement-breakpoint
+CREATE INDEX "action_skip_stage_stage_id_idx" ON "action_skip_stage" USING btree ("stage_id");--> statement-breakpoint
 CREATE INDEX "stage_service_id_idx" ON "stage" USING btree ("service_id");--> statement-breakpoint
 CREATE INDEX "stage_service_order_idx" ON "stage" USING btree ("service_id","order");

@@ -11,6 +11,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { user } from "../auth";
 import { portalTypeEnum } from "../shared";
 import { service } from "./service";
 import { stage } from "./stage";
@@ -24,6 +25,8 @@ export type FieldRule = {
     | "nin"
     | "gt"
     | "lt"
+    | "gte"
+    | "lte"
     | "empty"
     | "not_empty"
     | "contains"
@@ -121,7 +124,10 @@ export type FieldDefaultValue =
   | string[]
   | File
   | File[]
-  | number[];
+  | number[]
+  | Date
+  | Date[]
+  | [Date, Date];
 
 export type FieldConfig = {
   required: boolean | null;
@@ -200,6 +206,8 @@ export const formStep = pgTable("form_step", {
   visibilityCondition: jsonb("visibility_condition")
     .$type<VisibilityCondition | null>()
     .default(null),
+  createdBy: text("created_by").references(() => user.id),
+  updatedBy: text("updated_by").references(() => user.id),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -226,6 +234,8 @@ export const formGroup = pgTable("form_group", {
   visibilityCondition: jsonb(
     "visibility_condition",
   ).$type<VisibilityCondition>(),
+  createdBy: text("created_by").references(() => user.id),
+  updatedBy: text("updated_by").references(() => user.id),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -333,6 +343,8 @@ export const formField = pgTable(
         multiple: null,
       }),
     canEditInInternal: boolean("can_edit_in_internal").notNull().default(true),
+    createdBy: text("created_by").references(() => user.id),
+    updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -371,6 +383,8 @@ export const formRule = pgTable(
     actions: jsonb("actions").$type<RuleAction[]>().notNull().default([]),
     order: smallint("order").notNull().default(0),
     isActive: boolean("is_active").notNull().default(true),
+    createdBy: text("created_by").references(() => user.id),
+    updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
