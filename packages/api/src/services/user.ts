@@ -299,7 +299,7 @@ export const updateUser = async ({
     delete patch.emailVerified;
   }
 
-  if (Object.keys(patch).length === 0) {
+  if (Object.keys(patch).length === 0 && image === undefined) {
     throw new ORPCError("BAD_REQUEST", {
       message: "Nothing to update",
     });
@@ -307,8 +307,10 @@ export const updateUser = async ({
 
   const existing = await db.query.user.findFirst({
     where: eq(user.id, targetId),
-    columns: { id: true },
+    columns: { id: true, image: true },
   });
+
+  oldImageKey = existing?.image ?? undefined;
 
   if (!existing) {
     throw new ORPCError("NOT_FOUND", { message: "User not found" });
@@ -336,7 +338,7 @@ export const updateUser = async ({
       });
     }
 
-    if (newImageKey && oldImageKey)
+    if ((newImageKey || image === null) && oldImageKey)
       await deleteFile(oldImageKey).catch((err) => {
         console.log(err);
       });
