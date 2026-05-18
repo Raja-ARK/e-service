@@ -8,6 +8,13 @@
       "when": 1778863570882,
       "tag": "0000_lean_stardust",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779103410254,
+      "tag": "0001_secret_wither",
+      "breakpoints": true
     }
   ]
 }

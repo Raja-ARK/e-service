@@ -4,6 +4,7 @@ import { eq } from "@e-service/db/drizzle/orm";
 import { user } from "@e-service/db/schema/auth";
 import { professional } from "@e-service/db/schema/professional";
 import type { User } from "@e-service/db/zod-schemas/auth";
+import { ORPCError } from "@orpc/server";
 import type { Context } from "../context";
 import type {
   ChangePasswordInput,
@@ -15,7 +16,6 @@ import type {
   VerifyEmailOTPInput,
 } from "../types/auth";
 import { SIGNUP_ALLOWED_ORIGINS } from "../utils/constant";
-import { createError } from "../utils/error";
 
 export const signIn = async ({
   input,
@@ -32,7 +32,9 @@ export const signIn = async ({
   });
 
   if (!userRole) {
-    throw createError("Invalid email or password", "BAD_REQUEST");
+    throw new ORPCError("BAD_REQUEST", {
+      message: "Invalid email or password",
+    });
   }
 
   const result = await auth.api.signInEmail({
@@ -44,13 +46,17 @@ export const signIn = async ({
   const data = result.response;
 
   if (!data?.user) {
-    throw createError("Invalid email or password", "BAD_REQUEST");
+    throw new ORPCError("BAD_REQUEST", {
+      message: "Invalid email or password",
+    });
   }
 
   const token = result.headers.get("set-auth-token") ?? "";
 
   if (!token) {
-    throw createError("Failed to issue session token", "INTERNAL_SERVER_ERROR");
+    throw new ORPCError("INTERNAL_SERVER_ERROR", {
+      message: "Failed to issue session token",
+    });
   }
 
   return {
@@ -71,7 +77,7 @@ export const signUp = async ({
       context.origin as (typeof SIGNUP_ALLOWED_ORIGINS)[number],
     )
   ) {
-    throw createError("Unauthorized", "UNAUTHORIZED");
+    throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
   }
 
   const userRole = await db.query.user.findFirst({
@@ -82,7 +88,7 @@ export const signUp = async ({
   });
 
   if (userRole) {
-    throw createError("User already exists", "BAD_REQUEST");
+    throw new ORPCError("BAD_REQUEST", { message: "User already exists" });
   }
 
   const result = await auth.api.signUpEmail({
@@ -94,7 +100,7 @@ export const signUp = async ({
   const data = result.response;
 
   if (!data?.user) {
-    throw createError("Failed to sign up", "BAD_REQUEST");
+    throw new ORPCError("BAD_REQUEST", { message: "Failed to sign up" });
   }
 
   if (context.origin === "external") {
@@ -102,10 +108,6 @@ export const signUp = async ({
   }
 
   const token = result.headers.get("set-auth-token") ?? "";
-
-  // if (!token) {
-  //   throw createError("Failed to issue session token", "INTERNAL_SERVER_ERROR");
-  // }
 
   return {
     user: data.user as unknown as User,
@@ -129,11 +131,11 @@ export const sendVerificationEmail = async ({
   });
 
   if (!userData) {
-    throw createError("User not found", "NOT_FOUND");
+    throw new ORPCError("NOT_FOUND", { message: "User not found" });
   }
 
   if (userData.emailVerified) {
-    throw createError("Email already verified", "BAD_REQUEST");
+    throw new ORPCError("BAD_REQUEST", { message: "Email already verified" });
   }
 
   await auth.api.sendVerificationOTP({
@@ -160,8 +162,6 @@ export const verifyEmailOtp = async ({
     returnHeaders: true,
   });
 
-  // forwardCookies(result.headers, context);
-
   return {
     success: true,
     message: "Email verified successfully",
@@ -177,7 +177,7 @@ export const forgetPassword = async ({ email }: ForgetPasswordInput) => {
   });
 
   if (!userData) {
-    throw createError("User not found", "NOT_FOUND");
+    throw new ORPCError("NOT_FOUND", { message: "User not found" });
   }
 
   await auth.api.requestPasswordResetEmailOTP({
@@ -236,8 +236,6 @@ export const signOut = async ({ context }: { context: Context }) => {
     returnHeaders: true,
   });
 
-  // forwardCookies(result.headers, context);
-
   return {
     success: true,
     message: "Signed out successfully",
@@ -248,7 +246,7 @@ export const getUser = async ({ context }: { context: Context }) => {
   const session = await auth.api.getSession({ headers: context.headers });
 
   if (!session?.user) {
-    throw createError("Unauthorized", "UNAUTHORIZED");
+    throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" });
   }
 
   return {

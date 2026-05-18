@@ -5,16 +5,33 @@ import * as requests from "../services/request";
 const create = protectedProcedure
   .route({
     method: "POST",
-    path: "/requests",
+    path: "/",
     summary: "Create Request",
     tags: ["Request"],
   })
   .input(requestSchema.createRequestInputSchema)
-  .output(requestSchema.createRequestOutputSchema)
-  .handler(async ({ input }) => {
-    return await requests.createRequest({ input });
+  .output(requestSchema.requestOutputSchema)
+  .handler(async ({ input, context }) => {
+    return await requests.createRequest({ input, context });
   });
 
-export const requestRouter = {
-  create,
-};
+const update = protectedProcedure
+  .route({
+    method: "PUT",
+    path: "/{requestNo}",
+    summary: "Update Request",
+    tags: ["Request"],
+  })
+  .input(requestSchema.updateRequestInputSchema)
+  .output(requestSchema.requestOutputSchema)
+  .handler(async ({ input, context }) => {
+    return await requests.updateRequest({ input, context });
+  });
+
+export const requestRouter = protectedProcedure
+  .tag("Request")
+  .prefix("/requests")
+  .router({
+    create,
+    update,
+  });

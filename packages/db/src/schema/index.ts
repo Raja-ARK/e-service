@@ -4,6 +4,7 @@ export * from "./company";
 export * from "./department";
 export * from "./document";
 export * from "./email";
+export * from "./file";
 export * from "./lookup";
 export * from "./menu";
 export * from "./organization";

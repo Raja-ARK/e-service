@@ -31,7 +31,9 @@ export const request = pgTable(
       .references(() => user.id)
       .notNull(),
     category: categoryEnum("category").notNull(),
-    currentStageId: uuid("current_stage_id").references(() => stage.id),
+    currentStageId: uuid("current_stage_id")
+      .references(() => stage.id)
+      .notNull(),
     companyId: uuid("company_id").references(() => company.id),
     professionalId: uuid("professional_id").references(() => professional.id),
     paymentStatus: text("payment_status"),
@@ -39,8 +41,6 @@ export const request = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true }),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
     formData: jsonb("form_data").$type<Record<string, unknown>>(),
-    createdBy: text("created_by").references(() => user.id),
-    updatedBy: text("updated_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -72,16 +72,14 @@ export const requestHistory = pgTable(
     stageId: uuid("stage_id")
       .references(() => stage.id)
       .notNull(),
-    stageCompletedAt: timestamp("stage_completed_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    skippedAt: timestamp("skipped_at", { withTimezone: true }),
     actionId: uuid("action_id").references(() => action.id),
     performedBy: text("performed_by")
       .references(() => user.id)
       .notNull(),
     comments: text("comments"),
-    status: text("status"),
-    statusAr: text("status_ar"),
-    paymentStatus: text("payment_status"),
-    paymentStatusAr: text("payment_status_ar"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
