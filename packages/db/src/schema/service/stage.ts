@@ -60,7 +60,7 @@ export const stageActionVariantEnum = pgEnum("stage_action_variant", [
 // Action types available to external (citizen) users
 export const stageActionTypeExternalEnum = pgEnum(
   "stage_action_type_external",
-  ["submit", "payment", "certificate", "intermediate-submission"],
+  ["submit", "payment", "certificate", "intermediate-submission", "withdraw"],
 );
 
 // Action types available to internal (staff) users

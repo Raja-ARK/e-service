@@ -15,6 +15,7 @@
   "dependencies": {
     "@e-service/auth": "workspace:*",
     "@e-service/db": "workspace:*",
+    "@e-service/email": "workspace:*",
     "@e-service/env": "workspace:*",
     "@e-service/shared": "workspace:*",
     "@e-service/storage": "workspace:*",
