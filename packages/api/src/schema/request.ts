@@ -48,10 +48,22 @@ export const createRequestInputSchema = z
 
 export const requestOutputSchema = z.object({
   requestNo: z.string(),
-  isPaymentStage: z.boolean(),
+  isPaymentStage: z.boolean().optional(),
 });
 
 export const updateRequestInputSchema = z.object({
   requestNo: z.string(),
   formData: z.record(z.string(), z.unknown()),
+  actionId: z
+    .uuid({
+      error: ({ code }) => {
+        if (code === "invalid_type") {
+          return {
+            message: "Action id is required",
+          };
+        }
+      },
+    })
+    .trim()
+    .nonempty("Action id is required"),
 });

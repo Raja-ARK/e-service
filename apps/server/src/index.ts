@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/correctness/noUnusedVariables: Suppressing this rule for the server index file */
 import { createContext } from "@e-service/api/context";
 import { appRouter } from "@e-service/api/routers/index";
+import { cleanupOrphans } from "@e-service/api/services/file";
 import { env } from "@e-service/env/server";
 import { cors } from "@elysiajs/cors";
 import { SmartCoercionPlugin } from "@orpc/json-schema";
@@ -120,3 +121,12 @@ const app = new Elysia()
   .listen(3000, () => {
     console.log("Server is running on http://localhost:3000");
   });
+
+Bun.cron("@monthly", async () => {
+  try {
+    const { deleted } = await cleanupOrphans({ olderThanHours: 24 });
+    console.log(`[cron] orphan cleanup: deleted ${deleted} files`);
+  } catch (err) {
+    console.error("[cron] orphan cleanup failed", err);
+  }
+});
